@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-artist-style-translator"
-version = "1.5.1"
+version = "1.6.1"
 description = "An offline semantic style engine for model-adapted ComfyUI prompts."
 readme = "README.md"
 license = { text = "MIT" }
