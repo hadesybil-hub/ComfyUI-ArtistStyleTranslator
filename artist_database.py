@@ -1,28 +1,33 @@
 """Built-in structured style profiles for observable visual traits."""
 
-from copy import deepcopy
-import unicodedata
+try:
+    from .knowledge_base import (
+        KnowledgeBaseLoader,
+        STYLE_PROFILE_FIELDS,
+        legacy_artist_view,
+        normalize_artist_name,
+        project_semantic_style_profile,
+    )
+except ImportError:  # Supports the existing direct-file test loader.
+    from importlib.util import module_from_spec, spec_from_file_location
+    from pathlib import Path
 
-
-STYLE_PROFILE_FIELDS = (
-    "medium",
-    "genre",
-    "subject_focus",
-    "linework",
-    "shape_language",
-    "facial_design",
-    "anatomy",
-    "rendering",
-    "shading",
-    "coloring",
-    "palette",
-    "lighting",
-    "composition",
-    "environment",
-    "clothing",
-    "mood",
-    "detail_emphasis",
-)
+    _knowledge_path = Path(__file__).with_name("knowledge_base.py")
+    _knowledge_spec = spec_from_file_location(
+        "artist_style_translator_standalone_knowledge_base",
+        _knowledge_path,
+    )
+    if _knowledge_spec is None or _knowledge_spec.loader is None:
+        raise RuntimeError("Unable to load the artist knowledge base")
+    _knowledge_module = module_from_spec(_knowledge_spec)
+    _knowledge_spec.loader.exec_module(_knowledge_module)
+    KnowledgeBaseLoader = _knowledge_module.KnowledgeBaseLoader
+    STYLE_PROFILE_FIELDS = _knowledge_module.STYLE_PROFILE_FIELDS
+    legacy_artist_view = _knowledge_module.legacy_artist_view
+    normalize_artist_name = _knowledge_module.normalize_artist_name
+    project_semantic_style_profile = (
+        _knowledge_module.project_semantic_style_profile
+    )
 
 
 def _phrases(value):
@@ -33,323 +38,374 @@ def _phrases(value):
     return tuple(str(part).strip() for part in value if str(part).strip())
 
 
-def _record(canonical_name, aliases, *profile_values):
-    if len(profile_values) != len(STYLE_PROFILE_FIELDS):
-        raise ValueError("Style profile field count does not match schema")
+def _record(*, artist_id, canonical_name, aliases, **profile_values):
+    if set(profile_values) != set(STYLE_PROFILE_FIELDS):
+        missing = sorted(set(STYLE_PROFILE_FIELDS) - set(profile_values))
+        unknown = sorted(set(profile_values) - set(STYLE_PROFILE_FIELDS))
+        raise ValueError(
+            f"Style profile fields are invalid; missing={missing}, unknown={unknown}"
+        )
+    style_profile = {
+        field: _phrases(profile_values[field])
+        for field in STYLE_PROFILE_FIELDS
+    }
     return {
+        "artist_id": artist_id,
         "canonical_name": canonical_name,
+        "display_name": canonical_name,
         "aliases": tuple(aliases),
-        "style_profile": {
-            field: _phrases(value)
-            for field, value in zip(STYLE_PROFILE_FIELDS, profile_values)
+        "localized_names": {},
+        "category": ("legacy_builtin",),
+        "metadata": {
+            "source": "legacy_migration",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T13:52:45+08:00",
+            "updated_at": "2026-07-22T13:52:45+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        "semantic": {
+            "style_profile": style_profile,
+            "profile_confidence": 0.95,
+            "category_confidence": {
+                field: 0.95 for field in STYLE_PROFILE_FIELDS
+            },
+            "evidence": (
+                {
+                    "evidence_id": f"legacy:{artist_id}:profile",
+                    "type": "legacy_migration",
+                    "scope": "profile",
+                    "summary": (
+                        "Migrated from the pre-V1.7 built-in structured style "
+                        "profile without claiming new research provenance."
+                    ),
+                    "reference": "artist_database.py@1562858",
+                },
+            ),
         },
     }
 
 
-ARTISTS = (
+KNOWLEDGE_RECORDS = (
     _record(
-        "Yaegashi Nan", ("YaegashiNan", "Yaegashi-Nan"),
-        "anime character illustration", "mature character portraiture", "expressive character portraits; full-body figures",
-        "clean delicate linework; tapered contours", "elegant flowing shapes", "refined facial features; expressive almond-shaped eyes",
-        "graceful elongated proportions", "smooth polished rendering; carefully finished surfaces", "soft cel shading; controlled tonal transitions",
-        "smooth skin tones; nuanced fabric colors", "warm controlled palette; restrained accents", "warm soft illumination; subtle rim light",
-        "balanced character-centered framing; clear focal hierarchy", "minimal atmospheric backdrop", "detailed clothing folds; elegant fitted garments",
-        "composed; gently expressive", "faces; eyes; fabric folds; hair strands",
+        artist_id='yaegashi-nan', canonical_name="Yaegashi Nan", aliases=("YaegashiNan", "Yaegashi-Nan"),
+        medium="anime character illustration", genre="mature character portraiture", subject_focus="expressive character portraits; full-body figures",
+        linework="clean delicate linework; tapered contours", shape_language="elegant flowing shapes", facial_design="refined facial features; expressive almond-shaped eyes",
+        anatomy="graceful elongated proportions", rendering="smooth polished rendering; carefully finished surfaces", shading="soft cel shading; controlled tonal transitions",
+        coloring="smooth skin tones; nuanced fabric colors", palette="warm controlled palette; restrained accents", lighting="warm soft illumination; subtle rim light",
+        composition="balanced character-centered framing; clear focal hierarchy", environment="minimal atmospheric backdrop", clothing="detailed clothing folds; elegant fitted garments",
+        mood="composed; gently expressive", detail_emphasis="faces; eyes; fabric folds; hair strands",
     ),
     _record(
-        "Tony Taka", ("Tony", "TonyTaka", "Tony-Taka"),
-        "polished anime illustration", "romantic fantasy", "graceful character portraits; paired figures",
-        "fine continuous contours; soft edge control", "flowing rounded silhouettes", "softly modeled faces; luminous rounded eyes",
-        "slender balanced proportions", "glossy refined rendering; smooth surface finish", "gentle gradient shading; soft form modeling",
-        "rich harmonious colors; luminous skin tones", "jewel tones balanced with pastels", "soft radiant lighting; delicate highlights",
-        "calm symmetrical framing; layered portrait depth", "ornamental fantasy settings", "flowing fantasy costumes; decorative accessories",
-        "romantic; serene", "eyes; hair; fabric; ornamental details",
+        artist_id='tony-taka', canonical_name="Tony Taka", aliases=("Tony", "TonyTaka", "Tony-Taka"),
+        medium="polished anime illustration", genre="romantic fantasy", subject_focus="graceful character portraits; paired figures",
+        linework="fine continuous contours; soft edge control", shape_language="flowing rounded silhouettes", facial_design="softly modeled faces; luminous rounded eyes",
+        anatomy="slender balanced proportions", rendering="glossy refined rendering; smooth surface finish", shading="gentle gradient shading; soft form modeling",
+        coloring="rich harmonious colors; luminous skin tones", palette="jewel tones balanced with pastels", lighting="soft radiant lighting; delicate highlights",
+        composition="calm symmetrical framing; layered portrait depth", environment="ornamental fantasy settings", clothing="flowing fantasy costumes; decorative accessories",
+        mood="romantic; serene", detail_emphasis="eyes; hair; fabric; ornamental details",
     ),
     _record(
-        "Kantoku", ("Kantoku-Artist",),
-        "clean anime illustration", "slice-of-life", "youthful characters; everyday interactions",
-        "precise lightweight linework; crisp contours", "light compact silhouettes", "delicate faces; bright readable eyes",
-        "youthful natural proportions", "clean digital rendering; tidy surface detail", "light cel shading; gentle gradients",
-        "fresh pastel-leaning colors", "bright airy palette; soft accent colors", "clear daylight; diffuse ambient glow",
-        "spacious balanced layouts; casual scene framing", "bright interiors; open everyday spaces", "casual layered clothing; small fashion details",
-        "cheerful; relaxed", "facial expressions; clothing details; everyday objects",
+        artist_id='kantoku', canonical_name="Kantoku", aliases=("Kantoku-Artist",),
+        medium="clean anime illustration", genre="slice-of-life", subject_focus="youthful characters; everyday interactions",
+        linework="precise lightweight linework; crisp contours", shape_language="light compact silhouettes", facial_design="delicate faces; bright readable eyes",
+        anatomy="youthful natural proportions", rendering="clean digital rendering; tidy surface detail", shading="light cel shading; gentle gradients",
+        coloring="fresh pastel-leaning colors", palette="bright airy palette; soft accent colors", lighting="clear daylight; diffuse ambient glow",
+        composition="spacious balanced layouts; casual scene framing", environment="bright interiors; open everyday spaces", clothing="casual layered clothing; small fashion details",
+        mood="cheerful; relaxed", detail_emphasis="facial expressions; clothing details; everyday objects",
     ),
     _record(
-        "Mika Pikazo", ("MikaPikazo", "Mika-Pikazo"),
-        "graphic digital illustration", "pop fantasy", "energetic character portraits; fashion-focused figures",
-        "sharp confident contours; varied graphic strokes", "angular layered shapes; bold silhouette breaks", "stylized facial geometry; intense expressive eyes",
-        "dynamic fashion proportions", "high-impact graphic rendering; layered decorative surfaces", "hard-edged cel shading; abrupt color transitions",
-        "high-saturation color blocking; vivid accents", "electric complementary palette; multicolor contrasts", "bright punchy illumination; graphic highlights",
-        "dynamic poster framing; dense asymmetric balance", "abstract decorative backdrops; layered symbols", "fashion-forward costumes; graphic accessories",
-        "energetic; playful", "eyes; color blocks; accessories; decorative shapes",
+        artist_id='mika-pikazo', canonical_name="Mika Pikazo", aliases=("MikaPikazo", "Mika-Pikazo"),
+        medium="graphic digital illustration", genre="pop fantasy", subject_focus="energetic character portraits; fashion-focused figures",
+        linework="sharp confident contours; varied graphic strokes", shape_language="angular layered shapes; bold silhouette breaks", facial_design="stylized facial geometry; intense expressive eyes",
+        anatomy="dynamic fashion proportions", rendering="high-impact graphic rendering; layered decorative surfaces", shading="hard-edged cel shading; abrupt color transitions",
+        coloring="high-saturation color blocking; vivid accents", palette="electric complementary palette; multicolor contrasts", lighting="bright punchy illumination; graphic highlights",
+        composition="dynamic poster framing; dense asymmetric balance", environment="abstract decorative backdrops; layered symbols", clothing="fashion-forward costumes; graphic accessories",
+        mood="energetic; playful", detail_emphasis="eyes; color blocks; accessories; decorative shapes",
     ),
     _record(
-        "lack", ("Lack", "lackartist"),
-        "polished digital character illustration; crisp fantasy portrait art", "ornamental dark fantasy", "commanding character portraits; design-focused fantasy figures",
-        "controlled angular linework; crisp selective edge accents", "strong tapered silhouettes; intricate ornamental geometry", "defined facial planes; focused jewel-like eyes",
-        "athletic heroic proportions; poised stance", "high-clarity dimensional rendering; meticulously separated materials", "firm planar shading; deep sculpted shadows",
-        "deep chromatic fields; selective vivid accents", "dark jewel palette; concentrated warm highlights", "focused theatrical lighting; narrow luminous rim light",
-        "iconic centered portrait composition; layered character depth", "abstract dark fantasy atmosphere; restrained background motifs", "ornate layered fantasy costumes; finely designed metal accessories",
-        "intense; ceremonial", "facial focus; ornament; armor materials; silhouette edges",
+        artist_id='lack', canonical_name="lack", aliases=("Lack", "lackartist"),
+        medium="polished digital character illustration; crisp fantasy portrait art", genre="ornamental dark fantasy", subject_focus="commanding character portraits; design-focused fantasy figures",
+        linework="controlled angular linework; crisp selective edge accents", shape_language="strong tapered silhouettes; intricate ornamental geometry", facial_design="defined facial planes; focused jewel-like eyes",
+        anatomy="athletic heroic proportions; poised stance", rendering="high-clarity dimensional rendering; meticulously separated materials", shading="firm planar shading; deep sculpted shadows",
+        coloring="deep chromatic fields; selective vivid accents", palette="dark jewel palette; concentrated warm highlights", lighting="focused theatrical lighting; narrow luminous rim light",
+        composition="iconic centered portrait composition; layered character depth", environment="abstract dark fantasy atmosphere; restrained background motifs", clothing="ornate layered fantasy costumes; finely designed metal accessories",
+        mood="intense; ceremonial", detail_emphasis="facial focus; ornament; armor materials; silhouette edges",
     ),
     _record(
-        "redjuice", ("Redjuice", "red-juice"),
-        "cinematic science-fiction illustration; sleek digital concept art", "near-future visual narrative", "futuristic characters; technology-centered urban scenes",
-        "fine technical linework; precise luminous edge accents", "elongated aerodynamic forms; interlocking mechanical geometry", "refined angular faces; narrow sharply lit eyes",
-        "slender stylized proportions; controlled gesture", "layered atmospheric rendering; intricate synthetic surface treatment", "smooth tonal modeling; deep transparent ambient shadows",
-        "cool cinematic color grading; restrained signal-color accents", "blue-gray and cyan palette; isolated luminous highlights", "moody directional lighting; electric rim glow",
-        "asymmetric cinematic framing; strong foreground-to-background depth", "dense futuristic city structures; illuminated atmospheric haze", "technical garments; segmented armor and translucent panels",
-        "tense; futuristic", "interface-like details; synthetic materials; haze; luminous edges",
+        artist_id='redjuice', canonical_name="redjuice", aliases=("Redjuice", "red-juice"),
+        medium="cinematic science-fiction illustration; sleek digital concept art", genre="near-future visual narrative", subject_focus="futuristic characters; technology-centered urban scenes",
+        linework="fine technical linework; precise luminous edge accents", shape_language="elongated aerodynamic forms; interlocking mechanical geometry", facial_design="refined angular faces; narrow sharply lit eyes",
+        anatomy="slender stylized proportions; controlled gesture", rendering="layered atmospheric rendering; intricate synthetic surface treatment", shading="smooth tonal modeling; deep transparent ambient shadows",
+        coloring="cool cinematic color grading; restrained signal-color accents", palette="blue-gray and cyan palette; isolated luminous highlights", lighting="moody directional lighting; electric rim glow",
+        composition="asymmetric cinematic framing; strong foreground-to-background depth", environment="dense futuristic city structures; illuminated atmospheric haze", clothing="technical garments; segmented armor and translucent panels",
+        mood="tense; futuristic", detail_emphasis="interface-like details; synthetic materials; haze; luminous edges",
     ),
     _record(
-        "WLOP", ("wlop", "W-LOP"),
-        "atmospheric digital painting; painterly fantasy illustration", "cinematic environmental fantasy", "environmental storytelling; figures within expansive fantasy worlds",
-        "soft painterly edge transitions; minimally visible contours", "elegant flowing silhouettes; monumental sweeping forms", "realistic facial modeling; restrained expressions",
-        "graceful proportions within large scenes", "layered atmospheric rendering; character integrated with environment", "blended tonal transitions; forms softened by atmosphere",
-        "muted cinematic color grading; atmospheric depth colors", "subdued cool-warm palette; restrained jewel accents", "volumetric haze lighting; distant luminous atmosphere",
-        "wide cinematic composition; character embedded in a large-scale world", "large-scale world building; mist-filled architecture", "flowing garments shaped by wind; painterly fabric",
-        "dramatic; contemplative", "environmental scale; atmosphere; silhouette; narrative space",
+        artist_id='wlop', canonical_name="WLOP", aliases=("wlop", "W-LOP"),
+        medium="atmospheric digital painting; painterly fantasy illustration", genre="cinematic environmental fantasy", subject_focus="environmental storytelling; figures within expansive fantasy worlds",
+        linework="soft painterly edge transitions; minimally visible contours", shape_language="elegant flowing silhouettes; monumental sweeping forms", facial_design="realistic facial modeling; restrained expressions",
+        anatomy="graceful proportions within large scenes", rendering="layered atmospheric rendering; character integrated with environment", shading="blended tonal transitions; forms softened by atmosphere",
+        coloring="muted cinematic color grading; atmospheric depth colors", palette="subdued cool-warm palette; restrained jewel accents", lighting="volumetric haze lighting; distant luminous atmosphere",
+        composition="wide cinematic composition; character embedded in a large-scale world", environment="large-scale world building; mist-filled architecture", clothing="flowing garments shaped by wind; painterly fabric",
+        mood="dramatic; contemplative", detail_emphasis="environmental scale; atmosphere; silhouette; narrative space",
     ),
     _record(
-        "Guweiz", ("guweiz", "Gu Wei Zi"),
-        "polished digital character illustration; game character concept art", "heroic fantasy concept art", "single heroic characters; costume-centered presentation",
-        "clean controlled contours; precise costume detailing", "strong heroic silhouette; armor-driven shape design", "realistic anime-influenced facial design; focused expressions",
-        "grounded heroic anatomy; confident stance", "polished fantasy character rendering; detailed material finish", "firm dimensional shading; defined armor planes",
-        "rich controlled character colors; distinct material separation", "deep fantasy palette; focused accent colors", "dramatic character lighting; strong directional highlights",
-        "heroic character presentation; full-figure concept framing", "restrained atmospheric backdrop; secondary environmental detail", "detailed armor and clothing design; layered game costume elements",
-        "resolute; adventurous", "costume construction; armor; silhouette; character materials",
+        artist_id='guweiz', canonical_name="Guweiz", aliases=("guweiz", "Gu Wei Zi"),
+        medium="polished digital character illustration; game character concept art", genre="heroic fantasy concept art", subject_focus="single heroic characters; costume-centered presentation",
+        linework="clean controlled contours; precise costume detailing", shape_language="strong heroic silhouette; armor-driven shape design", facial_design="realistic anime-influenced facial design; focused expressions",
+        anatomy="grounded heroic anatomy; confident stance", rendering="polished fantasy character rendering; detailed material finish", shading="firm dimensional shading; defined armor planes",
+        coloring="rich controlled character colors; distinct material separation", palette="deep fantasy palette; focused accent colors", lighting="dramatic character lighting; strong directional highlights",
+        composition="heroic character presentation; full-figure concept framing", environment="restrained atmospheric backdrop; secondary environmental detail", clothing="detailed armor and clothing design; layered game costume elements",
+        mood="resolute; adventurous", detail_emphasis="costume construction; armor; silhouette; character materials",
     ),
     _record(
-        "Sakimichan", ("saki michan", "Saki-michan"),
-        "semi-realistic digital painting; CG character illustration", "game promotional character art", "glamorous character portraits; anatomy-focused figures",
-        "soft polished contours; clean facial edges", "sculpted body forms; curved glamorous silhouettes", "refined facial beauty; glossy expressive eyes",
-        "detailed anatomy rendering; idealized proportions", "highly polished character rendering; smooth skin finish", "smooth volumetric modeling; carefully blended form shading",
-        "luminous skin coloring; glossy material treatment", "rich saturated palette; warm skin-focused harmony", "strong rim lighting; glossy specular highlights",
-        "character-dominant promotional framing; dramatic close composition", "minimal fantasy or studio backdrop", "form-fitting detailed costumes; reflective fabric and armor",
-        "glamorous; dramatic", "facial beauty; skin; anatomy; glossy materials",
+        artist_id='sakimichan', canonical_name="Sakimichan", aliases=("saki michan", "Saki-michan"),
+        medium="semi-realistic digital painting; CG character illustration", genre="game promotional character art", subject_focus="glamorous character portraits; anatomy-focused figures",
+        linework="soft polished contours; clean facial edges", shape_language="sculpted body forms; curved glamorous silhouettes", facial_design="refined facial beauty; glossy expressive eyes",
+        anatomy="detailed anatomy rendering; idealized proportions", rendering="highly polished character rendering; smooth skin finish", shading="smooth volumetric modeling; carefully blended form shading",
+        coloring="luminous skin coloring; glossy material treatment", palette="rich saturated palette; warm skin-focused harmony", lighting="strong rim lighting; glossy specular highlights",
+        composition="character-dominant promotional framing; dramatic close composition", environment="minimal fantasy or studio backdrop", clothing="form-fitting detailed costumes; reflective fabric and armor",
+        mood="glamorous; dramatic", detail_emphasis="facial beauty; skin; anatomy; glossy materials",
     ),
     _record(
-        "Artgerm", ("art germ", "Stanley Artgerm Lau"),
-        "commercial digital illustration; comic-influenced character art", "hero portraiture", "sharp character focus; iconic individual heroes",
-        "clean confident linework; sharp controlled edges", "bold elegant silhouette; balanced graphic shapes", "elegant facial features; clear heroic expression",
-        "idealized comic-informed anatomy; poised proportions", "clean polished rendering; premium illustration finish", "controlled smooth shading; crisp form definition",
-        "controlled commercial colors; clean local color separation", "balanced graphic palette; selective vivid accents", "clean studio lighting; precise focal highlights",
-        "hero portrait composition; balanced graphic composition", "minimal supporting backdrop; graphic negative space", "refined hero costumes; clearly designed accessories",
-        "confident; aspirational", "face; silhouette; graphic balance; premium finish",
+        artist_id='artgerm', canonical_name="Artgerm", aliases=("art germ", "Stanley Artgerm Lau"),
+        medium="commercial digital illustration; comic-influenced character art", genre="hero portraiture", subject_focus="sharp character focus; iconic individual heroes",
+        linework="clean confident linework; sharp controlled edges", shape_language="bold elegant silhouette; balanced graphic shapes", facial_design="elegant facial features; clear heroic expression",
+        anatomy="idealized comic-informed anatomy; poised proportions", rendering="clean polished rendering; premium illustration finish", shading="controlled smooth shading; crisp form definition",
+        coloring="controlled commercial colors; clean local color separation", palette="balanced graphic palette; selective vivid accents", lighting="clean studio lighting; precise focal highlights",
+        composition="hero portrait composition; balanced graphic composition", environment="minimal supporting backdrop; graphic negative space", clothing="refined hero costumes; clearly designed accessories",
+        mood="confident; aspirational", detail_emphasis="face; silhouette; graphic balance; premium finish",
     ),
     _record(
-        "Rella", ("rella",),
-        "luminous digital illustration", "dreamlike fantasy", "ethereal character portraits; floating figures",
-        "fine luminous linework; delicate broken contours", "light floating forms; translucent layers", "delicate faces; sparkling reflective eyes",
-        "slender weightless proportions", "translucent layered rendering; sparkling surface effects", "soft diffused shading; glowing tonal transitions",
-        "pastel gradients; iridescent accents", "pearl-like palette; cool luminous pastels", "glowing diffused light; scattered highlights",
-        "airy layered composition; generous negative space", "dreamlike atmospheric spaces; floating particles", "light translucent garments; delicate ornaments",
-        "ethereal; hopeful", "light effects; eyes; translucent fabric; particles",
+        artist_id='rella', canonical_name="Rella", aliases=("rella",),
+        medium="luminous digital illustration", genre="dreamlike fantasy", subject_focus="ethereal character portraits; floating figures",
+        linework="fine luminous linework; delicate broken contours", shape_language="light floating forms; translucent layers", facial_design="delicate faces; sparkling reflective eyes",
+        anatomy="slender weightless proportions", rendering="translucent layered rendering; sparkling surface effects", shading="soft diffused shading; glowing tonal transitions",
+        coloring="pastel gradients; iridescent accents", palette="pearl-like palette; cool luminous pastels", lighting="glowing diffused light; scattered highlights",
+        composition="airy layered composition; generous negative space", environment="dreamlike atmospheric spaces; floating particles", clothing="light translucent garments; delicate ornaments",
+        mood="ethereal; hopeful", detail_emphasis="light effects; eyes; translucent fabric; particles",
     ),
     _record(
-        "Nardack", ("nardack",),
-        "polished anime illustration", "decorative fantasy", "elegant character portraits; poised figures",
-        "smooth precise contours; fine decorative lines", "slender curved silhouettes", "gentle faces; glossy expressive eyes",
-        "elongated graceful proportions", "smooth glossy rendering; ornamental surface finish", "soft cel gradients; subtle form shading",
-        "harmonious soft colors; polished highlights", "pastel jewel palette; balanced accents", "gentle luminous lighting; soft rim glow",
-        "balanced portrait framing; graceful visual flow", "decorative fantasy backdrops", "ornate costumes; delicate accessories",
-        "elegant; calm", "eyes; hair; ornaments; costume trim",
+        artist_id='nardack', canonical_name="Nardack", aliases=("nardack",),
+        medium="polished anime illustration", genre="decorative fantasy", subject_focus="elegant character portraits; poised figures",
+        linework="smooth precise contours; fine decorative lines", shape_language="slender curved silhouettes", facial_design="gentle faces; glossy expressive eyes",
+        anatomy="elongated graceful proportions", rendering="smooth glossy rendering; ornamental surface finish", shading="soft cel gradients; subtle form shading",
+        coloring="harmonious soft colors; polished highlights", palette="pastel jewel palette; balanced accents", lighting="gentle luminous lighting; soft rim glow",
+        composition="balanced portrait framing; graceful visual flow", environment="decorative fantasy backdrops", clothing="ornate costumes; delicate accessories",
+        mood="elegant; calm", detail_emphasis="eyes; hair; ornaments; costume trim",
     ),
     _record(
-        "Anmi", ("anmi",),
-        "soft anime illustration", "intimate slice-of-life", "quiet character portraits; gentle everyday moments",
-        "thin understated linework; soft contours", "light graceful forms; compact silhouettes", "subtle expressions; softly defined eyes",
-        "natural youthful proportions", "delicate low-contrast rendering; restrained detail", "soft ambient shading; shallow tonal range",
-        "muted pastel colors; gentle skin tones", "quiet neutral palette; pale accents", "soft ambient illumination; subtle window light",
-        "close quiet framing; intimate negative space", "simple interiors; understated everyday settings", "casual fashion; softly folded fabric",
-        "gentle; introspective", "expressions; hands; fabric; small objects",
+        artist_id='anmi', canonical_name="Anmi", aliases=("anmi",),
+        medium="soft anime illustration", genre="intimate slice-of-life", subject_focus="quiet character portraits; gentle everyday moments",
+        linework="thin understated linework; soft contours", shape_language="light graceful forms; compact silhouettes", facial_design="subtle expressions; softly defined eyes",
+        anatomy="natural youthful proportions", rendering="delicate low-contrast rendering; restrained detail", shading="soft ambient shading; shallow tonal range",
+        coloring="muted pastel colors; gentle skin tones", palette="quiet neutral palette; pale accents", lighting="soft ambient illumination; subtle window light",
+        composition="close quiet framing; intimate negative space", environment="simple interiors; understated everyday settings", clothing="casual fashion; softly folded fabric",
+        mood="gentle; introspective", detail_emphasis="expressions; hands; fabric; small objects",
     ),
     _record(
-        "ASK", ("ask", "A-S-K"),
-        "stylized digital painting", "fantasy portraiture", "head-and-shoulder studies; solitary characters",
-        "crisp selective contours; painterly edge variation", "sculpted angular forms", "defined facial planes; controlled expressions",
-        "grounded realistic proportions", "sculpted dimensional rendering; restrained texture", "controlled gradient shading; firm value structure",
-        "rich subdued colors; selective accents", "earthy jewel palette; controlled contrast", "focused studio-like lighting; shaped face light",
-        "strong portrait framing; deliberate cropping", "minimal tonal backgrounds", "structured fantasy clothing; refined accessories",
-        "reserved; commanding", "facial planes; eyes; material edges; accessories",
+        artist_id='ask', canonical_name="ASK", aliases=("ask", "A-S-K"),
+        medium="stylized digital painting", genre="fantasy portraiture", subject_focus="head-and-shoulder studies; solitary characters",
+        linework="crisp selective contours; painterly edge variation", shape_language="sculpted angular forms", facial_design="defined facial planes; controlled expressions",
+        anatomy="grounded realistic proportions", rendering="sculpted dimensional rendering; restrained texture", shading="controlled gradient shading; firm value structure",
+        coloring="rich subdued colors; selective accents", palette="earthy jewel palette; controlled contrast", lighting="focused studio-like lighting; shaped face light",
+        composition="strong portrait framing; deliberate cropping", environment="minimal tonal backgrounds", clothing="structured fantasy clothing; refined accessories",
+        mood="reserved; commanding", detail_emphasis="facial planes; eyes; material edges; accessories",
     ),
     _record(
-        "Krenz Cushart", ("Krenz", "KrenzCushart", "Krenz-Cushart"),
-        "painterly digital illustration; anatomy-driven concept painting", "dynamic action fantasy", "figures in motion; gesture-centered action scenes",
-        "confident structural drawing; energetic broken edge work", "sweeping directional masses; forceful gesture arcs", "solid planar facial construction; animated expressions",
-        "convincing anatomical structure; aggressive foreshortening", "broad painterly rendering; clearly modeled material volumes", "strong value construction; decisive cast and bounce shadows",
-        "rich varied colors; broad controlled tonal range", "cinematic warm-cool palette; saturated focal accents", "strong directional key light; dramatic colored bounce light",
-        "action-oriented diagonal composition; forceful depth movement", "dimensional fantasy spaces; perspective-driven atmospheric distance", "layered action costumes; armor following body mechanics",
-        "energetic; instructive", "anatomy; gesture rhythm; light logic; spatial construction",
+        artist_id='krenz-cushart', canonical_name="Krenz Cushart", aliases=("Krenz", "KrenzCushart", "Krenz-Cushart"),
+        medium="painterly digital illustration; anatomy-driven concept painting", genre="dynamic action fantasy", subject_focus="figures in motion; gesture-centered action scenes",
+        linework="confident structural drawing; energetic broken edge work", shape_language="sweeping directional masses; forceful gesture arcs", facial_design="solid planar facial construction; animated expressions",
+        anatomy="convincing anatomical structure; aggressive foreshortening", rendering="broad painterly rendering; clearly modeled material volumes", shading="strong value construction; decisive cast and bounce shadows",
+        coloring="rich varied colors; broad controlled tonal range", palette="cinematic warm-cool palette; saturated focal accents", lighting="strong directional key light; dramatic colored bounce light",
+        composition="action-oriented diagonal composition; forceful depth movement", environment="dimensional fantasy spaces; perspective-driven atmospheric distance", clothing="layered action costumes; armor following body mechanics",
+        mood="energetic; instructive", detail_emphasis="anatomy; gesture rhythm; light logic; spatial construction",
     ),
     _record(
-        "Hiten", ("hiten",),
-        "delicate luminous anime illustration; finely finished digital art", "serene romantic fantasy", "quiet character encounters; elegant intimate portraits",
-        "clean slender linework; exceptionally fine tapered contours", "long graceful curves; light floating silhouettes", "serene refined faces; translucent jewel-like eyes",
-        "slender elegant proportions; gentle posture", "smooth luminous rendering; restrained decorative finish", "soft cel gradients; feathered shadow transitions",
-        "pale harmonious coloring; subtle floral accents", "airy pastel palette; cool lavender and sky tones", "gentle backlighting; diffused atmospheric glow",
-        "calm lyrical composition; carefully shaped negative space", "quiet scenic backdrops; softly dissolved foliage and sky", "elegant layered clothing; delicate translucent fabric detail",
-        "serene; wistful", "eyes; hair strands; fabric edges; ambient glow",
+        artist_id='hiten', canonical_name="Hiten", aliases=("hiten",),
+        medium="delicate luminous anime illustration; finely finished digital art", genre="serene romantic fantasy", subject_focus="quiet character encounters; elegant intimate portraits",
+        linework="clean slender linework; exceptionally fine tapered contours", shape_language="long graceful curves; light floating silhouettes", facial_design="serene refined faces; translucent jewel-like eyes",
+        anatomy="slender elegant proportions; gentle posture", rendering="smooth luminous rendering; restrained decorative finish", shading="soft cel gradients; feathered shadow transitions",
+        coloring="pale harmonious coloring; subtle floral accents", palette="airy pastel palette; cool lavender and sky tones", lighting="gentle backlighting; diffused atmospheric glow",
+        composition="calm lyrical composition; carefully shaped negative space", environment="quiet scenic backdrops; softly dissolved foliage and sky", clothing="elegant layered clothing; delicate translucent fabric detail",
+        mood="serene; wistful", detail_emphasis="eyes; hair strands; fabric edges; ambient glow",
     ),
     _record(
-        "Tiv", ("tiv",),
-        "contemporary anime illustration", "modern slice-of-life", "everyday character interactions; ensemble scenes",
-        "neat consistent linework; crisp readable contours", "clean compact shapes; balanced silhouettes", "clear expressions; neatly constructed faces",
-        "natural contemporary proportions", "clean digital rendering; carefully controlled details", "controlled soft shading; readable form separation",
-        "clear bright colors; natural skin tones", "fresh balanced palette; modest accents", "fresh natural lighting; clear ambient fill",
-        "orderly character-focused composition; readable grouping", "modern interiors; everyday urban spaces", "modern layered clothing; practical fabric details",
-        "friendly; observant", "expressions; clothing; gestures; scene objects",
+        artist_id='tiv', canonical_name="Tiv", aliases=("tiv",),
+        medium="contemporary anime illustration", genre="modern slice-of-life", subject_focus="everyday character interactions; ensemble scenes",
+        linework="neat consistent linework; crisp readable contours", shape_language="clean compact shapes; balanced silhouettes", facial_design="clear expressions; neatly constructed faces",
+        anatomy="natural contemporary proportions", rendering="clean digital rendering; carefully controlled details", shading="controlled soft shading; readable form separation",
+        coloring="clear bright colors; natural skin tones", palette="fresh balanced palette; modest accents", lighting="fresh natural lighting; clear ambient fill",
+        composition="orderly character-focused composition; readable grouping", environment="modern interiors; everyday urban spaces", clothing="modern layered clothing; practical fabric details",
+        mood="friendly; observant", detail_emphasis="expressions; clothing; gestures; scene objects",
     ),
     _record(
-        "Coffee-kizoku", ("Coffee Kizoku", "CoffeeKizoku", "coffee-kizoku"),
-        "refined anime portraiture", "elegant contemporary", "calm character portraits; interior scenes",
-        "fine polished linework; smooth contours", "graceful vertical forms", "calm faces; glossy carefully shaped eyes",
-        "slender composed proportions", "polished smooth rendering; glossy hair treatment", "soft tonal shading; subtle fabric modeling",
-        "cool elegant colors; restrained saturation", "navy and neutral palette; pale highlights", "soft window-like illumination; controlled highlights",
-        "composed portrait framing; quiet depth", "refined interiors; subdued architectural details", "formal clothing; carefully folded skirts and jackets",
-        "quiet; sophisticated", "hair; eyes; fabric folds; window light",
+        artist_id='coffee-kizoku', canonical_name="Coffee-kizoku", aliases=("Coffee Kizoku", "CoffeeKizoku", "coffee-kizoku"),
+        medium="refined anime portraiture", genre="elegant contemporary", subject_focus="calm character portraits; interior scenes",
+        linework="fine polished linework; smooth contours", shape_language="graceful vertical forms", facial_design="calm faces; glossy carefully shaped eyes",
+        anatomy="slender composed proportions", rendering="polished smooth rendering; glossy hair treatment", shading="soft tonal shading; subtle fabric modeling",
+        coloring="cool elegant colors; restrained saturation", palette="navy and neutral palette; pale highlights", lighting="soft window-like illumination; controlled highlights",
+        composition="composed portrait framing; quiet depth", environment="refined interiors; subdued architectural details", clothing="formal clothing; carefully folded skirts and jackets",
+        mood="quiet; sophisticated", detail_emphasis="hair; eyes; fabric folds; window light",
     ),
     _record(
-        "BUNBUN", ("bunbun", "Bun Bun"),
-        "bold anime illustration", "adventure fantasy", "active characters; heroic groups",
-        "firm clean contours; decisive line weight", "clear graphic silhouettes; angular costume shapes", "lively expressions; strongly readable eyes",
-        "athletic animated proportions", "crisp graphic rendering; clear material separation", "crisp cel shading; firm shadow shapes",
-        "strong primary colors; vivid costume accents", "bright adventurous palette; clear contrasts", "bright directional light; crisp highlights",
-        "dynamic readable composition; strong pose flow", "open adventure settings; simplified action backdrops", "adventure costumes; bold armor shapes",
-        "lively; heroic", "silhouette; expressions; costume shapes; action gesture",
+        artist_id='bunbun', canonical_name="BUNBUN", aliases=("bunbun", "Bun Bun"),
+        medium="bold anime illustration", genre="adventure fantasy", subject_focus="active characters; heroic groups",
+        linework="firm clean contours; decisive line weight", shape_language="clear graphic silhouettes; angular costume shapes", facial_design="lively expressions; strongly readable eyes",
+        anatomy="athletic animated proportions", rendering="crisp graphic rendering; clear material separation", shading="crisp cel shading; firm shadow shapes",
+        coloring="strong primary colors; vivid costume accents", palette="bright adventurous palette; clear contrasts", lighting="bright directional light; crisp highlights",
+        composition="dynamic readable composition; strong pose flow", environment="open adventure settings; simplified action backdrops", clothing="adventure costumes; bold armor shapes",
+        mood="lively; heroic", detail_emphasis="silhouette; expressions; costume shapes; action gesture",
     ),
     _record(
-        "LAM", ("lam", "L-A-M"),
-        "high-impact graphic illustration; poster-oriented digital art", "urban pop fantasy", "dramatic close-up portraits; confrontational fashion characters",
-        "razor-sharp high-contrast linework; aggressive tapered strokes", "angular geometric forms; fractured silhouette accents", "intense expressions; sharply constructed oversized eyes",
-        "stylized elongated proportions; angular poses", "dense graphic rendering; layered print and screen-like surfaces", "hard graphic shadows; stark black value breaks",
-        "electric color blocking; bold complementary clashes", "neon magenta-cyan-yellow palette; deep black anchors", "hard frontal graphic lighting; vivid chromatic rim accents",
-        "compressed poster composition; extreme dramatic cropping", "abstract urban graphics; layered geometric and typography-like shapes", "street fashion; angular accessories and bold pattern panels",
-        "intense; rebellious", "eyes; line contrast; neon blocks; overlapping graphic layers",
+        artist_id='lam', canonical_name="LAM", aliases=("lam", "L-A-M"),
+        medium="high-impact graphic illustration; poster-oriented digital art", genre="urban pop fantasy", subject_focus="dramatic close-up portraits; confrontational fashion characters",
+        linework="razor-sharp high-contrast linework; aggressive tapered strokes", shape_language="angular geometric forms; fractured silhouette accents", facial_design="intense expressions; sharply constructed oversized eyes",
+        anatomy="stylized elongated proportions; angular poses", rendering="dense graphic rendering; layered print and screen-like surfaces", shading="hard graphic shadows; stark black value breaks",
+        coloring="electric color blocking; bold complementary clashes", palette="neon magenta-cyan-yellow palette; deep black anchors", lighting="hard frontal graphic lighting; vivid chromatic rim accents",
+        composition="compressed poster composition; extreme dramatic cropping", environment="abstract urban graphics; layered geometric and typography-like shapes", clothing="street fashion; angular accessories and bold pattern panels",
+        mood="intense; rebellious", detail_emphasis="eyes; line contrast; neon blocks; overlapping graphic layers",
     ),
     _record(
-        "fuzichoco", ("Fuzichoco", "fuzi choco", "fuzi-choco"),
-        "ornate digital illustration", "decorative fantasy", "delicate characters; richly detailed scenes",
-        "fine elaborate linework; intricate contour networks", "organic curling forms; densely interlocking motifs", "delicate faces; jewel-like eyes",
-        "graceful storybook proportions", "layered decorative rendering; intricate surface ornament", "fine graduated shading; translucent overlaps",
-        "jewel-like colors; layered transparent hues", "rich botanical palette; luminous accents", "glowing magical illumination; scattered light points",
-        "richly layered composition; dense ornamental depth", "botanical architecture; elaborate fantasy spaces", "ornate fantasy garments; patterned textiles",
-        "enchanted; abundant", "flora; ornament; textiles; architectural motifs",
+        artist_id='fuzichoco', canonical_name="fuzichoco", aliases=("Fuzichoco", "fuzi choco", "fuzi-choco"),
+        medium="ornate digital illustration", genre="decorative fantasy", subject_focus="delicate characters; richly detailed scenes",
+        linework="fine elaborate linework; intricate contour networks", shape_language="organic curling forms; densely interlocking motifs", facial_design="delicate faces; jewel-like eyes",
+        anatomy="graceful storybook proportions", rendering="layered decorative rendering; intricate surface ornament", shading="fine graduated shading; translucent overlaps",
+        coloring="jewel-like colors; layered transparent hues", palette="rich botanical palette; luminous accents", lighting="glowing magical illumination; scattered light points",
+        composition="richly layered composition; dense ornamental depth", environment="botanical architecture; elaborate fantasy spaces", clothing="ornate fantasy garments; patterned textiles",
+        mood="enchanted; abundant", detail_emphasis="flora; ornament; textiles; architectural motifs",
     ),
     _record(
-        "SWAV", ("swav", "S-W-A-V"),
-        "stylized digital character art", "modern fantasy", "poised character portraits; fashion figures",
-        "precise tapered contours; clean selective strokes", "sleek geometric forms; bold centered silhouettes", "sharp facial detail; composed expressions",
-        "stylized balanced proportions", "smooth hard-edged rendering; contemporary graphic finish", "controlled planar shading; crisp transitions",
-        "controlled saturated colors; clean accent blocks", "limited modern palette; vivid focal accents", "clean contrast lighting; polished highlights",
-        "bold centered composition; controlled negative space", "minimal graphic environments", "modern fantasy outfits; sleek material panels",
-        "poised; modern", "face; silhouette; material panels; color accents",
+        artist_id='swav', canonical_name="SWAV", aliases=("swav", "S-W-A-V"),
+        medium="stylized digital character art", genre="modern fantasy", subject_focus="poised character portraits; fashion figures",
+        linework="precise tapered contours; clean selective strokes", shape_language="sleek geometric forms; bold centered silhouettes", facial_design="sharp facial detail; composed expressions",
+        anatomy="stylized balanced proportions", rendering="smooth hard-edged rendering; contemporary graphic finish", shading="controlled planar shading; crisp transitions",
+        coloring="controlled saturated colors; clean accent blocks", palette="limited modern palette; vivid focal accents", lighting="clean contrast lighting; polished highlights",
+        composition="bold centered composition; controlled negative space", environment="minimal graphic environments", clothing="modern fantasy outfits; sleek material panels",
+        mood="poised; modern", detail_emphasis="face; silhouette; material panels; color accents",
     ),
     _record(
-        "LM7", ("lm7", "LM-7"),
-        "atmospheric digital illustration", "industrial science fiction", "armored characters; environmental scenes",
-        "dense technical linework; broken mechanical contours", "compact angular silhouettes; layered machine forms", "restrained facial detail; focused expressions",
-        "compact grounded proportions", "textured industrial rendering; layered mechanical surfaces", "low-key tonal shading; deep occlusion shadows",
-        "dark restrained colors; selective luminous accents", "charcoal and steel palette; signal-color highlights", "low-key cinematic lighting; localized glow",
-        "layered environmental composition; compressed depth", "industrial futuristic settings; atmospheric debris", "armored clothing; modular technical gear",
-        "tense; atmospheric", "machinery; armor; surface wear; localized light",
+        artist_id='lm7', canonical_name="LM7", aliases=("lm7", "LM-7"),
+        medium="atmospheric digital illustration", genre="industrial science fiction", subject_focus="armored characters; environmental scenes",
+        linework="dense technical linework; broken mechanical contours", shape_language="compact angular silhouettes; layered machine forms", facial_design="restrained facial detail; focused expressions",
+        anatomy="compact grounded proportions", rendering="textured industrial rendering; layered mechanical surfaces", shading="low-key tonal shading; deep occlusion shadows",
+        coloring="dark restrained colors; selective luminous accents", palette="charcoal and steel palette; signal-color highlights", lighting="low-key cinematic lighting; localized glow",
+        composition="layered environmental composition; compressed depth", environment="industrial futuristic settings; atmospheric debris", clothing="armored clothing; modular technical gear",
+        mood="tense; atmospheric", detail_emphasis="machinery; armor; surface wear; localized light",
     ),
     _record(
-        "Ilya Kuvshinov", ("IlyaKuvshinov", "Ilya-Kuvshinov"),
-        "polished digital illustration; anime-influenced portrait painting", "contemporary character portraiture", "fashion-oriented portraits; intimate character close-ups",
-        "crisp fine contours; selective painted edges", "clean elongated silhouettes; graphic hair shapes", "large expressive eyes; simplified elegant facial planes",
-        "slender contemporary proportions; relaxed poses", "smooth polished portrait rendering; refined skin and hair surfaces", "soft gradient modeling; controlled cel-painterly transitions",
-        "restrained modern coloring; subtle tinted skin tones", "cool neutral palette; selective saturated accents", "soft studio illumination; understated cinematic rim light",
-        "tight portrait cropping; asymmetric graphic framing", "minimal urban or abstract backdrops", "contemporary fashion; clean layered garments",
-        "cool; introspective", "eyes; hair shapes; facial planes; graphic cropping",
+        artist_id='ilya-kuvshinov', canonical_name="Ilya Kuvshinov", aliases=("IlyaKuvshinov", "Ilya-Kuvshinov"),
+        medium="polished digital illustration; anime-influenced portrait painting", genre="contemporary character portraiture", subject_focus="fashion-oriented portraits; intimate character close-ups",
+        linework="crisp fine contours; selective painted edges", shape_language="clean elongated silhouettes; graphic hair shapes", facial_design="large expressive eyes; simplified elegant facial planes",
+        anatomy="slender contemporary proportions; relaxed poses", rendering="smooth polished portrait rendering; refined skin and hair surfaces", shading="soft gradient modeling; controlled cel-painterly transitions",
+        coloring="restrained modern coloring; subtle tinted skin tones", palette="cool neutral palette; selective saturated accents", lighting="soft studio illumination; understated cinematic rim light",
+        composition="tight portrait cropping; asymmetric graphic framing", environment="minimal urban or abstract backdrops", clothing="contemporary fashion; clean layered garments",
+        mood="cool; introspective", detail_emphasis="eyes; hair shapes; facial planes; graphic cropping",
     ),
     _record(
-        "Mai Yoneyama", ("MaiYoneyama", "Mai-Yoneyama"),
-        "mixed-media anime illustration; animation-inspired editorial art", "expressive pop character art", "dynamic characters; gesture-driven fashion figures",
-        "loose calligraphic strokes; visible sketch accents", "angular elastic forms; exaggerated gesture shapes", "striking eyes; simplified expressive facial features",
-        "stylized flexible anatomy; energetic posing", "layered flat and painted textures; intentionally visible mark-making", "selective graphic shadows; broken tonal patches",
-        "bold color overlays; fragmented color transitions", "saturated warm-cool contrasts; unexpected accent hues", "flat graphic illumination; selective luminous glow",
-        "asymmetric editorial composition; active negative space", "abstract color fields; floating graphic marks", "experimental fashion silhouettes; layered fabric shapes",
-        "energetic; experimental", "gesture; hands; line rhythm; overlapping color shapes",
+        artist_id='mai-yoneyama', canonical_name="Mai Yoneyama", aliases=("MaiYoneyama", "Mai-Yoneyama"),
+        medium="mixed-media anime illustration; animation-inspired editorial art", genre="expressive pop character art", subject_focus="dynamic characters; gesture-driven fashion figures",
+        linework="loose calligraphic strokes; visible sketch accents", shape_language="angular elastic forms; exaggerated gesture shapes", facial_design="striking eyes; simplified expressive facial features",
+        anatomy="stylized flexible anatomy; energetic posing", rendering="layered flat and painted textures; intentionally visible mark-making", shading="selective graphic shadows; broken tonal patches",
+        coloring="bold color overlays; fragmented color transitions", palette="saturated warm-cool contrasts; unexpected accent hues", lighting="flat graphic illumination; selective luminous glow",
+        composition="asymmetric editorial composition; active negative space", environment="abstract color fields; floating graphic marks", clothing="experimental fashion silhouettes; layered fabric shapes",
+        mood="energetic; experimental", detail_emphasis="gesture; hands; line rhythm; overlapping color shapes",
     ),
     _record(
-        "Greg Rutkowski", ("GregRutkowski", "Greg-Rutkowski"),
-        "painterly fantasy key art; digital oil-like painting", "epic high fantasy", "heroic figures; creatures within grand landscapes",
-        "brush-defined contours; textured broken edges", "monumental triangular masses; sweeping heroic silhouettes", "classically modeled faces; resolute expressions",
-        "heroic anatomical proportions; forceful stance", "dense painterly rendering; richly textured brush surfaces", "dramatic value sculpting; deep cast shadows",
-        "cinematic warm-cool coloring; glowing atmospheric accents", "warm amber against cool blue-gray; earthy darks", "golden rim lighting; volumetric storm light",
-        "central heroic composition; sweeping landscape depth", "ancient ruins; mountains and turbulent skies", "ornate armor; weathered fantasy materials",
-        "epic; stormy", "brush texture; dramatic light; armor; environmental scale",
+        artist_id='greg-rutkowski', canonical_name="Greg Rutkowski", aliases=("GregRutkowski", "Greg-Rutkowski"),
+        medium="painterly fantasy key art; digital oil-like painting", genre="epic high fantasy", subject_focus="heroic figures; creatures within grand landscapes",
+        linework="brush-defined contours; textured broken edges", shape_language="monumental triangular masses; sweeping heroic silhouettes", facial_design="classically modeled faces; resolute expressions",
+        anatomy="heroic anatomical proportions; forceful stance", rendering="dense painterly rendering; richly textured brush surfaces", shading="dramatic value sculpting; deep cast shadows",
+        coloring="cinematic warm-cool coloring; glowing atmospheric accents", palette="warm amber against cool blue-gray; earthy darks", lighting="golden rim lighting; volumetric storm light",
+        composition="central heroic composition; sweeping landscape depth", environment="ancient ruins; mountains and turbulent skies", clothing="ornate armor; weathered fantasy materials",
+        mood="epic; stormy", detail_emphasis="brush texture; dramatic light; armor; environmental scale",
     ),
     _record(
-        "Craig Mullins", ("CraigMullins", "Craig-Mullins"),
-        "concept painting; digital gouache-like illustration", "cinematic science fantasy", "environment concepts; vehicles and small scale figures",
-        "loose brush-defined edges; lost-and-found contours", "large value masses; irregular industrial forms", "minimally stated faces; shape-led figures",
-        "small scale figures; natural functional poses", "economical painterly rendering; suggestive material marks", "broad value blocks; selective sharp accents",
-        "muted naturalistic coloring; localized chromatic notes", "earth tones and cool grays; sparse warm accents", "motivated cinematic light; broad atmospheric shadow",
-        "wide concept-art framing; strong layered depth", "industrial interiors; alien landscapes and distant structures", "utilitarian costumes; minimally described gear",
-        "exploratory; atmospheric", "scale cues; value design; architecture; brush economy",
+        artist_id='craig-mullins', canonical_name="Craig Mullins", aliases=("CraigMullins", "Craig-Mullins"),
+        medium="concept painting; digital gouache-like illustration", genre="cinematic science fantasy", subject_focus="environment concepts; vehicles and small scale figures",
+        linework="loose brush-defined edges; lost-and-found contours", shape_language="large value masses; irregular industrial forms", facial_design="minimally stated faces; shape-led figures",
+        anatomy="small scale figures; natural functional poses", rendering="economical painterly rendering; suggestive material marks", shading="broad value blocks; selective sharp accents",
+        coloring="muted naturalistic coloring; localized chromatic notes", palette="earth tones and cool grays; sparse warm accents", lighting="motivated cinematic light; broad atmospheric shadow",
+        composition="wide concept-art framing; strong layered depth", environment="industrial interiors; alien landscapes and distant structures", clothing="utilitarian costumes; minimally described gear",
+        mood="exploratory; atmospheric", detail_emphasis="scale cues; value design; architecture; brush economy",
     ),
     _record(
-        "Feng Zhu", ("FengZhu", "Feng-Zhu"),
-        "industrial design concept art; digital marker-style rendering", "science-fiction production design", "vehicles; architecture and functional equipment",
-        "precise construction lines; controlled design contours", "functional geometric forms; engineered modular silhouettes", "minimal facial emphasis; readable scale figures",
-        "functional human scale; neutral reference poses", "clear design rendering; explicit material separation", "controlled gradients; informative cast shadows",
-        "neutral industrial coloring; practical surface variation", "gray and earth palette; signal-color accents", "clear studio or environmental illumination; readable reflections",
-        "perspective-driven design presentation; wide establishing views", "functional interiors; transport and built environments", "utilitarian uniforms; equipment-focused gear",
-        "practical; futuristic", "perspective; function; machinery; human scale",
+        artist_id='feng-zhu', canonical_name="Feng Zhu", aliases=("FengZhu", "Feng-Zhu"),
+        medium="industrial design concept art; digital marker-style rendering", genre="science-fiction production design", subject_focus="vehicles; architecture and functional equipment",
+        linework="precise construction lines; controlled design contours", shape_language="functional geometric forms; engineered modular silhouettes", facial_design="minimal facial emphasis; readable scale figures",
+        anatomy="functional human scale; neutral reference poses", rendering="clear design rendering; explicit material separation", shading="controlled gradients; informative cast shadows",
+        coloring="neutral industrial coloring; practical surface variation", palette="gray and earth palette; signal-color accents", lighting="clear studio or environmental illumination; readable reflections",
+        composition="perspective-driven design presentation; wide establishing views", environment="functional interiors; transport and built environments", clothing="utilitarian uniforms; equipment-focused gear",
+        mood="practical; futuristic", detail_emphasis="perspective; function; machinery; human scale",
     ),
     _record(
-        "Jama Jurabaev", ("JamaJurabaev", "Jama-Jurabaev"),
-        "cinematic concept painting; matte-style digital illustration", "narrative science fantasy", "story moments; environments anchored by human figures",
-        "selective painted contours; controlled photographic edge integration", "massive silhouettes; brutalist and organic shape contrasts", "restrained realistic faces; narrative expressions",
-        "realistic scale figures; grounded movement", "photographic textures integrated with painterly rendering; cohesive surfaces", "cinematic value grouping; deep environmental shadows",
-        "desaturated cinematic color grading; localized narrative accents", "earth and cool-gray palette; isolated warm lights", "diffuse haze lighting; dramatic shafts and silhouettes",
-        "widescreen film framing; deliberate story blocking", "vast architecture; terrain and atmospheric distance", "weathered practical clothing; narrative equipment",
-        "ominous; contemplative", "story beat; scale; atmosphere; directional light",
+        artist_id='jama-jurabaev', canonical_name="Jama Jurabaev", aliases=("JamaJurabaev", "Jama-Jurabaev"),
+        medium="cinematic concept painting; matte-style digital illustration", genre="narrative science fantasy", subject_focus="story moments; environments anchored by human figures",
+        linework="selective painted contours; controlled photographic edge integration", shape_language="massive silhouettes; brutalist and organic shape contrasts", facial_design="restrained realistic faces; narrative expressions",
+        anatomy="realistic scale figures; grounded movement", rendering="photographic textures integrated with painterly rendering; cohesive surfaces", shading="cinematic value grouping; deep environmental shadows",
+        coloring="desaturated cinematic color grading; localized narrative accents", palette="earth and cool-gray palette; isolated warm lights", lighting="diffuse haze lighting; dramatic shafts and silhouettes",
+        composition="widescreen film framing; deliberate story blocking", environment="vast architecture; terrain and atmospheric distance", clothing="weathered practical clothing; narrative equipment",
+        mood="ominous; contemplative", detail_emphasis="story beat; scale; atmosphere; directional light",
     ),
     _record(
-        "Even Amundsen", ("EvenAmundsen", "Even-Amundsen"),
-        "painterly character concept art; textured digital fantasy illustration", "Nordic-inspired fantasy", "rugged characters; design-focused portraits",
-        "confident sketch-informed contours; textured edge variation", "broad sturdy silhouettes; carved angular shapes", "characterful faces; weathered expressive features",
-        "solid grounded anatomy; weight-bearing poses", "textured painterly rendering; tactile natural materials", "chunky form shading; strong readable planes",
-        "earthy restrained coloring; cold atmospheric accents", "desaturated earth palette; iron gray and muted blue", "moody side lighting; cool environmental fill",
-        "clear character-design framing; silhouette-first composition", "sparse Nordic landscapes; misty natural backdrops", "layered leather fur and metal; practical fantasy gear",
-        "rugged; mythic", "costume construction; silhouette; facial character; material texture",
+        artist_id='even-amundsen', canonical_name="Even Amundsen", aliases=("EvenAmundsen", "Even-Amundsen"),
+        medium="painterly character concept art; textured digital fantasy illustration", genre="Nordic-inspired fantasy", subject_focus="rugged characters; design-focused portraits",
+        linework="confident sketch-informed contours; textured edge variation", shape_language="broad sturdy silhouettes; carved angular shapes", facial_design="characterful faces; weathered expressive features",
+        anatomy="solid grounded anatomy; weight-bearing poses", rendering="textured painterly rendering; tactile natural materials", shading="chunky form shading; strong readable planes",
+        coloring="earthy restrained coloring; cold atmospheric accents", palette="desaturated earth palette; iron gray and muted blue", lighting="moody side lighting; cool environmental fill",
+        composition="clear character-design framing; silhouette-first composition", environment="sparse Nordic landscapes; misty natural backdrops", clothing="layered leather fur and metal; practical fantasy gear",
+        mood="rugged; mythic", detail_emphasis="costume construction; silhouette; facial character; material texture",
     ),
     _record(
-        "Ruan Jia", ("RuanJia", "Ruan-Jia"),
-        "ornate painterly fantasy illustration; high-detail digital painting", "epic eastern-influenced fantasy", "elaborate warriors; magical narrative scenes",
-        "fine expressive contours; shifting painterly edges", "flowing interwoven forms; elaborate layered silhouettes", "refined faces; luminous focused eyes",
-        "graceful dynamic anatomy; sweeping poses", "high-density painterly rendering; intricate ornamental surfaces", "rich sculpted shading; luminous layered shadows",
-        "saturated nuanced coloring; radiant magical effects", "deep jewel-tone palette; controlled warm-cool contrast", "dramatic magical illumination; concentrated glow and rim light",
-        "dynamic layered composition; swirling directional movement", "ornate fantasy architecture; luminous atmospheric depth", "elaborate armor and robes; intricate metal and fabric motifs",
-        "majestic; mysterious", "ornament; color transitions; armor detail; magical light",
+        artist_id='ruan-jia', canonical_name="Ruan Jia", aliases=("RuanJia", "Ruan-Jia"),
+        medium="ornate painterly fantasy illustration; high-detail digital painting", genre="epic eastern-influenced fantasy", subject_focus="elaborate warriors; magical narrative scenes",
+        linework="fine expressive contours; shifting painterly edges", shape_language="flowing interwoven forms; elaborate layered silhouettes", facial_design="refined faces; luminous focused eyes",
+        anatomy="graceful dynamic anatomy; sweeping poses", rendering="high-density painterly rendering; intricate ornamental surfaces", shading="rich sculpted shading; luminous layered shadows",
+        coloring="saturated nuanced coloring; radiant magical effects", palette="deep jewel-tone palette; controlled warm-cool contrast", lighting="dramatic magical illumination; concentrated glow and rim light",
+        composition="dynamic layered composition; swirling directional movement", environment="ornate fantasy architecture; luminous atmospheric depth", clothing="elaborate armor and robes; intricate metal and fabric motifs",
+        mood="majestic; mysterious", detail_emphasis="ornament; color transitions; armor detail; magical light",
     ),
 )
 
 
-def normalize_artist_name(name):
-    """Normalize case and common separator differences for safe lookup."""
-    try:
-        text = unicodedata.normalize("NFKC", str(name or "")).casefold().strip()
-        return "".join(character for character in text if character.isalnum())
-    except Exception:
-        return ""
+_KNOWLEDGE_BASE = KnowledgeBaseLoader(KNOWLEDGE_RECORDS)
 
-
-_ARTIST_INDEX = {}
-for _entry in ARTISTS:
-    for _name in (_entry["canonical_name"], *_entry["aliases"]):
-        _ARTIST_INDEX[normalize_artist_name(_name)] = _entry
+# Compatibility snapshot retained for callers that imported ARTISTS directly.
+ARTISTS = tuple(
+    legacy_artist_view(record)
+    for record in _KNOWLEDGE_BASE.published_records()
+)
 
 
 def get_artist(name):
     """Return a defensive copy of a matching record, or None."""
-    entry = _ARTIST_INDEX.get(normalize_artist_name(name))
-    return deepcopy(entry) if entry is not None else None
+    return _KNOWLEDGE_BASE.get_artist(name)
 
 
 def list_artists():
     """Return canonical names sorted without case sensitivity."""
-    return sorted((entry["canonical_name"] for entry in ARTISTS), key=str.casefold)
+    return _KNOWLEDGE_BASE.list_artists()
+
+
+def get_knowledge_record(name):
+    """Return a defensive copy of one published V1.7 knowledge record."""
+    return _KNOWLEDGE_BASE.get_knowledge_record(name)
+
+
+def project_artist_profile(name):
+    """Project one published knowledge record into SemanticStyleProfile."""
+    record = get_knowledge_record(name)
+    return project_semantic_style_profile(record) if record is not None else None
+
+
+__all__ = [
+    "STYLE_PROFILE_FIELDS",
+    "KNOWLEDGE_RECORDS",
+    "ARTISTS",
+    "normalize_artist_name",
+    "get_artist",
+    "list_artists",
+    "get_knowledge_record",
+    "project_artist_profile",
+]
