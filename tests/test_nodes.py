@@ -34,6 +34,9 @@ ArtistStyleSelector = project_package.NODE_CLASS_MAPPINGS[
 ArtistStyleTranslator = project_package.NODE_CLASS_MAPPINGS[
     "ArtistStyleTranslator"
 ]
+ArtistStyleTranslatorAdvanced = project_package.NODE_CLASS_MAPPINGS[
+    "ArtistStyleTranslatorAdvanced"
+]
 ArtistStylePromptMerge = project_package.NODE_CLASS_MAPPINGS[
     "ArtistStylePromptMerge"
 ]
@@ -113,6 +116,75 @@ class ArtistStyleTranslatorTests(unittest.TestCase):
         self.assertTrue(required["artist_name"][1]["multiline"])
         self.assertEqual(required["target_model"][1]["default"], "Z-Image")
         self.assertEqual(required["detail_level"][1]["default"], "Standard")
+
+
+class ArtistStyleTranslatorAdvancedTests(unittest.TestCase):
+    def setUp(self):
+        self.node = ArtistStyleTranslatorAdvanced()
+
+    def test_advanced_translator_is_registered(self):
+        self.assertIs(
+            project_package.NODE_CLASS_MAPPINGS[
+                "ArtistStyleTranslatorAdvanced"
+            ],
+            ArtistStyleTranslatorAdvanced,
+        )
+
+    def test_advanced_translator_has_display_name(self):
+        self.assertEqual(
+            project_package.NODE_DISPLAY_NAME_MAPPINGS[
+                "ArtistStyleTranslatorAdvanced"
+            ],
+            "Artist Style Translator Advanced",
+        )
+
+    def test_artist_list_comes_from_builtin_provider_contract(self):
+        discovered = ["Provider Contract Artist"]
+        with patch.object(
+            BuiltinSemanticProvider,
+            "list_artists",
+            return_value=discovered,
+        ) as list_artists:
+            required = ArtistStyleTranslatorAdvanced.INPUT_TYPES()["required"]
+
+        list_artists.assert_called_once_with()
+        self.assertIs(required["artist"][0], discovered)
+
+    def test_output_matches_existing_translator(self):
+        artist = BuiltinSemanticProvider().list_artists()[0]
+        expected = ArtistStyleTranslator().translate_style(
+            artist,
+            "FLUX",
+            "Detailed",
+        )
+
+        result = self.node.translate_style(
+            artist,
+            "FLUX",
+            "Detailed",
+        )
+
+        self.assertEqual(result, expected)
+        self.assertEqual(ArtistStyleTranslatorAdvanced.RETURN_TYPES, ("STRING",))
+        self.assertEqual(ArtistStyleTranslatorAdvanced.RETURN_NAMES, ("result",))
+
+    def test_output_connects_to_prompt_merge(self):
+        artist = BuiltinSemanticProvider().list_artists()[0]
+        translated = self.node.translate_style(
+            artist,
+            "Z-Image",
+            "Standard",
+        )
+
+        merged = ArtistStylePromptMerge().merge_prompts(
+            "a character portrait",
+            translated[0],
+        )
+
+        self.assertEqual(
+            merged,
+            (f"a character portrait\n\n{translated[0]}",),
+        )
 
 
 class ArtistStylePromptMergeTests(unittest.TestCase):

@@ -65,6 +65,40 @@ class ArtistStyleTranslator:
         return (build_prompt(artist_name, target_model, detail_level),)
 
 
+class ArtistStyleTranslatorAdvanced:
+    """Select a built-in artist and delegate translation to the existing node."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        translator_required = ArtistStyleTranslator.INPUT_TYPES()["required"]
+        return {
+            "required": {
+                "artist": (
+                    BuiltinSemanticProvider().list_artists(),
+                ),
+                "target_model": translator_required["target_model"],
+                "detail_level": translator_required["detail_level"],
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("result",)
+    FUNCTION = "translate_style"
+    CATEGORY = "prompt/artist_style"
+
+    def translate_style(
+        self,
+        artist,
+        target_model="Z-Image",
+        detail_level="Standard",
+    ):
+        return ArtistStyleTranslator().translate_style(
+            artist,
+            target_model,
+            detail_level,
+        )
+
+
 class ArtistStylePromptMerge:
     """Cleanly append a generated style prompt to an editable base prompt."""
 

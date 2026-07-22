@@ -28,6 +28,7 @@ def main():
     assert hasattr(package, "NODE_DISPLAY_NAME_MAPPINGS")
     assert "ArtistStyleSelector" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStyleTranslator" in package.NODE_CLASS_MAPPINGS
+    assert "ArtistStyleTranslatorAdvanced" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStylePromptMerge" in package.NODE_CLASS_MAPPINGS
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStyleSelector"
@@ -35,6 +36,9 @@ def main():
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStyleTranslator"
     ) == "Artist Style Translator"
+    assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
+        "ArtistStyleTranslatorAdvanced"
+    ) == "Artist Style Translator Advanced"
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStylePromptMerge"
     ) == "Artist Style Prompt Merge"
@@ -72,6 +76,23 @@ def main():
     assert isinstance(result[0], str) and result[0]
     assert "Yaegashi Nan" not in result[0]
     assert "in the style of" not in result[0].casefold()
+
+    advanced_class = package.NODE_CLASS_MAPPINGS[
+        "ArtistStyleTranslatorAdvanced"
+    ]
+    advanced_required = advanced_class.INPUT_TYPES()["required"]
+    advanced_artists = advanced_required["artist"][0]
+    assert advanced_artists == selector_artists
+    advanced_result = advanced_class().translate_style(
+        advanced_artists[0],
+        "Z-Image",
+        "Standard",
+    )
+    assert advanced_result == node.translate_style(
+        advanced_artists[0],
+        "Z-Image",
+        "Standard",
+    )
 
     merge_class = package.NODE_CLASS_MAPPINGS["ArtistStylePromptMerge"]
     merge_node = merge_class()
