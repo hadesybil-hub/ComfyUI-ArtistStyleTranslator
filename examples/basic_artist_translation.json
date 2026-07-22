@@ -1,0 +1,114 @@
+{
+  "last_node_id": 6,
+  "last_link_id": 5,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "ArtistStyleSelector",
+      "pos": [40, 220],
+      "size": [300, 82],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [{"name": "artist", "type": "COMBO", "widget": {"name": "artist"}, "link": null}],
+      "outputs": [{"name": "artist_name", "type": "STRING", "links": [1, 2]}],
+      "title": "1. Artist Style Selector",
+      "properties": {"Node name for S&R": "ArtistStyleSelector"},
+      "widgets_values": ["Yaegashi Nan"]
+    },
+    {
+      "id": 2,
+      "type": "SemanticProfilePreview",
+      "pos": [420, 40],
+      "size": [360, 140],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {"name": "artist_name", "type": "STRING", "widget": {"name": "artist_name"}, "link": 1},
+        {"name": "verbose", "type": "BOOLEAN", "widget": {"name": "verbose"}, "link": null}
+      ],
+      "outputs": [
+        {"name": "text", "type": "STRING", "links": [3]},
+        {"name": "json", "type": "STRING", "links": null}
+      ],
+      "title": "2. SemanticStyleProfile Preview",
+      "properties": {"Node name for S&R": "SemanticProfilePreview"},
+      "widgets_values": ["Yaegashi Nan", false]
+    },
+    {
+      "id": 3,
+      "type": "ArtistStyleTranslator",
+      "pos": [420, 280],
+      "size": [360, 180],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "artist_name", "type": "STRING", "widget": {"name": "artist_name"}, "link": 2},
+        {"name": "target_model", "type": "COMBO", "widget": {"name": "target_model"}, "link": null},
+        {"name": "detail_level", "type": "COMBO", "widget": {"name": "detail_level"}, "link": null}
+      ],
+      "outputs": [{"name": "result", "type": "STRING", "links": [4]}],
+      "title": "3. Artist Style Translator",
+      "properties": {"Node name for S&R": "ArtistStyleTranslator"},
+      "widgets_values": ["Yaegashi Nan", "Z-Image", "Standard"]
+    },
+    {
+      "id": 4,
+      "type": "PreviewAny",
+      "pos": [840, 40],
+      "size": [360, 180],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [{"name": "source", "type": "*", "link": 3}],
+      "outputs": [{"name": "STRING", "type": "STRING", "links": null}],
+      "title": "Semantic Preview Output",
+      "properties": {"Node name for S&R": "PreviewAny", "cnr_id": "comfy-core"},
+      "widgets_values": []
+    },
+    {
+      "id": 5,
+      "type": "ArtistStylePromptMerge",
+      "pos": [840, 300],
+      "size": [360, 220],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "base_prompt", "type": "STRING", "widget": {"name": "base_prompt"}, "link": null},
+        {"name": "style_prompt", "type": "STRING", "link": 4}
+      ],
+      "outputs": [{"name": "final_prompt", "type": "STRING", "links": [5]}],
+      "title": "4. Base Prompt + Style Prompt",
+      "properties": {"Node name for S&R": "ArtistStylePromptMerge"},
+      "widgets_values": ["A character portrait in a quiet studio, soft natural light, calm expression"]
+    },
+    {
+      "id": 6,
+      "type": "PreviewAny",
+      "pos": [1260, 300],
+      "size": [360, 180],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [{"name": "source", "type": "*", "link": 5}],
+      "outputs": [{"name": "STRING", "type": "STRING", "links": null}],
+      "title": "Final Prompt Output",
+      "properties": {"Node name for S&R": "PreviewAny", "cnr_id": "comfy-core"},
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "STRING"],
+    [2, 1, 0, 3, 0, "STRING"],
+    [3, 2, 0, 4, 0, "STRING"],
+    [4, 3, 0, 5, 1, "STRING"],
+    [5, 5, 0, 6, 0, "STRING"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {"ds": {"scale": 0.8, "offset": [100, 120]}, "frontendVersion": "1.45.20"},
+  "version": 0.4
+}
