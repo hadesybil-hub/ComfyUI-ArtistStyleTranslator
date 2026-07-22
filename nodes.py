@@ -112,6 +112,10 @@ class SemanticProfilePreview:
                     "STRING",
                     {"default": "Yaegashi Nan"},
                 ),
+                "verbose": (
+                    "BOOLEAN",
+                    {"default": False},
+                ),
             },
         }
 
@@ -125,10 +129,10 @@ class SemanticProfilePreview:
             resolver if resolver is not None else ArtistStyleResolver()
         )
 
-    def preview_profile(self, artist_name):
+    def preview_profile(self, artist_name, verbose=False):
         profile = self._resolver.resolve(artist_name)
         return (
-            profile_to_text(profile),
+            profile_to_text(profile, verbose=verbose),
             profile_to_json(profile),
         )
 

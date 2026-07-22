@@ -80,6 +80,8 @@ class SemanticProfilePreviewNodeTests(unittest.TestCase):
         required = SemanticProfilePreview.INPUT_TYPES()["required"]
 
         self.assertEqual(required["artist_name"][0], "STRING")
+        self.assertEqual(required["verbose"][0], "BOOLEAN")
+        self.assertFalse(required["verbose"][1]["default"])
         self.assertEqual(
             SemanticProfilePreview.RETURN_TYPES,
             ("STRING", "STRING"),
@@ -102,6 +104,23 @@ class SemanticProfilePreviewNodeTests(unittest.TestCase):
                 formatter.profile_to_json(profile),
             ),
         )
+
+    def test_verbose_changes_text_but_not_json(self):
+        profile = sample_profile()
+        node = SemanticProfilePreview(resolver=MockResolver(profile))
+
+        compact_text, compact_json = node.preview_profile(
+            "Preview Artist",
+            False,
+        )
+        verbose_text, verbose_json = node.preview_profile(
+            "Preview Artist",
+            True,
+        )
+
+        self.assertNotIn("source: external\n", compact_text.split("features:")[1])
+        self.assertIn("source: external", verbose_text.split("features:")[1])
+        self.assertEqual(compact_json, verbose_json)
 
     def test_unknown_artist_uses_existing_resolver_fallback(self):
         text, profile_json = SemanticProfilePreview().preview_profile(

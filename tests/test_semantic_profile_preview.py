@@ -51,6 +51,15 @@ def sample_profile():
                 evidence=("light observation", "secondary source"),
                 generated_by="external_test",
             ),
+            style_engine.Feature(
+                category="linework",
+                value="controlled contours",
+                priority=0.73,
+                source="user",
+                confidence=0.79,
+                evidence=(),
+                generated_by="user_test",
+            ),
         ),
         source="user",
         confidence=0.88,
@@ -74,7 +83,7 @@ class SemanticProfilePreviewTests(unittest.TestCase):
             ["light observation", "secondary source"],
         )
 
-    def test_outputs_preserve_feature_order_without_reranking(self):
+    def test_text_groups_categories_in_first_seen_order(self):
         profile = sample_profile()
         mapping = preview.profile_to_dict(profile)
         text = preview.profile_to_text(profile)
@@ -87,9 +96,50 @@ class SemanticProfilePreviewTests(unittest.TestCase):
         self.assertIn("confidence: 0.880", text)
         self.assertIn("generated_by: preview_test", text)
         self.assertIn("evidence: profile observation", text)
-        self.assertIn("priority=0.400", text)
+        self.assertEqual(text.count("  linework:"), 1)
+        self.assertLess(text.index("  linework:"), text.index("  lighting:"))
+
+    def test_category_preserves_original_feature_order(self):
+        profile = sample_profile()
+        text = preview.profile_to_text(profile)
+        linework_values = [
+            feature.value
+            for feature in profile.features
+            if feature.category == "linework"
+        ]
+
+        self.assertLess(
+            text.index(linework_values[0]),
+            text.index(linework_values[1]),
+        )
+
+    def test_priority_uses_two_decimal_places(self):
+        text = preview.profile_to_text(sample_profile())
+
+        self.assertIn("priority=0.40", text)
+        self.assertIn("priority=0.90", text)
+        self.assertIn("priority=0.73", text)
+        self.assertNotIn("priority=0.400", text)
+
+    def test_compact_text_hides_repeated_feature_metadata(self):
+        text = preview.profile_to_text(sample_profile())
+
+        self.assertIn("source: user", text)
+        self.assertIn("confidence: 0.880", text)
+        self.assertIn("evidence: profile observation", text)
+        self.assertNotIn("source: builtin", text)
+        self.assertNotIn("confidence: 0.810", text)
+        self.assertNotIn("evidence: line observation", text)
+        self.assertNotIn("generated_by: test_provider", text)
+
+    def test_verbose_text_shows_complete_feature_metadata(self):
+        text = preview.profile_to_text(sample_profile(), verbose=True)
+
+        self.assertIn("source: builtin", text)
+        self.assertIn("confidence: 0.810", text)
         self.assertIn("evidence: line observation", text)
-        self.assertLess(text.index("[linework]"), text.index("[lighting]"))
+        self.assertIn("generated_by: test_provider", text)
+        self.assertIn("evidence: (none)", text)
 
     def test_json_is_deterministic_unicode_and_parseable(self):
         profile = sample_profile()
@@ -102,6 +152,23 @@ class SemanticProfilePreviewTests(unittest.TestCase):
             json.loads(first),
             preview.profile_to_dict(profile),
         )
+
+    def test_json_is_unchanged_by_verbose_text_mode(self):
+        profile = sample_profile()
+
+        compact_json = preview.format_profile(
+            profile,
+            "json",
+            verbose=False,
+        )
+        verbose_json = preview.format_profile(
+            profile,
+            "json",
+            verbose=True,
+        )
+
+        self.assertEqual(compact_json, verbose_json)
+        self.assertEqual(compact_json, preview.profile_to_json(profile))
 
     def test_invalid_input_is_rejected(self):
         formatters = (

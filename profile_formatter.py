@@ -45,35 +45,50 @@ def profile_to_dict(profile):
     }
 
 
-def profile_to_text(profile):
-    """Return a stable human-readable preview of a semantic profile."""
+def _evidence_text(evidence):
+    return "; ".join(evidence) if evidence else "(none)"
+
+
+def _group_features(features):
+    groups = {}
+    for feature in features:
+        groups.setdefault(feature["category"], []).append(feature)
+    return groups
+
+
+def profile_to_text(profile, *, verbose=False):
+    """Return a grouped human-readable preview of a semantic profile."""
     data = profile_to_dict(profile)
     lines = [
         "Semantic Style Profile",
         f"source: {data['source']}",
         f"confidence: {data['confidence']:.3f}",
         f"generated_by: {data['generated_by']}",
+        f"evidence: {_evidence_text(data['evidence'])}",
     ]
-
-    if data["evidence"]:
-        lines.append(f"evidence: {'; '.join(data['evidence'])}")
 
     lines.append("features:")
     if not data["features"]:
         lines.append("  (none)")
         return "\n".join(lines)
 
-    for feature in data["features"]:
-        lines.append(f"  - [{feature['category']}] {feature['value']}")
-        lines.append(
-            "    "
-            f"priority={feature['priority']:.3f}, "
-            f"confidence={feature['confidence']:.3f}, "
-            f"source={feature['source']}, "
-            f"generated_by={feature['generated_by']}"
-        )
-        if feature["evidence"]:
-            lines.append(f"    evidence: {'; '.join(feature['evidence'])}")
+    for category, features in _group_features(data["features"]).items():
+        lines.append(f"  {category}:")
+        for feature in features:
+            lines.append(
+                f"    - {feature['value']} "
+                f"(priority={feature['priority']:.2f})"
+            )
+            if verbose:
+                lines.extend(
+                    (
+                        f"      source: {feature['source']}",
+                        f"      confidence: {feature['confidence']:.3f}",
+                        "      evidence: "
+                        f"{_evidence_text(feature['evidence'])}",
+                        f"      generated_by: {feature['generated_by']}",
+                    )
+                )
 
     return "\n".join(lines)
 
@@ -88,11 +103,11 @@ def profile_to_json(profile, *, indent=2):
     )
 
 
-def format_profile(profile, output_format="text"):
+def format_profile(profile, output_format="text", *, verbose=False):
     """Format a semantic profile as text, dict, or JSON."""
     normalized_format = str(output_format or "").strip().casefold()
     if normalized_format == "text":
-        return profile_to_text(profile)
+        return profile_to_text(profile, verbose=verbose)
     if normalized_format == "dict":
         return profile_to_dict(profile)
     if normalized_format == "json":

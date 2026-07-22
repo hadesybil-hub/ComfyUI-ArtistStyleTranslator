@@ -102,10 +102,13 @@ def main():
     preview_class = package.NODE_CLASS_MAPPINGS["SemanticProfilePreview"]
     preview_required = preview_class.INPUT_TYPES()["required"]
     assert preview_required["artist_name"][0] == "STRING"
+    assert preview_required["verbose"][0] == "BOOLEAN"
+    assert preview_required["verbose"][1]["default"] is False
     assert preview_class.RETURN_TYPES == ("STRING", "STRING")
     assert preview_class.RETURN_NAMES == ("text", "json")
     preview_text, preview_json = preview_class().preview_profile(
-        selector_artists[0]
+        selector_artists[0],
+        False,
     )
     preview_data = json.loads(preview_json)
     assert preview_text.startswith("Semantic Style Profile\n")
