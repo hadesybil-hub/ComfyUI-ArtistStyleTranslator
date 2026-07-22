@@ -90,7 +90,7 @@ class HomareKnowledgeRecordTests(unittest.TestCase):
                 self.assertEqual(entry["canonical_name"], "Homare")
 
         artists = database.list_artists()
-        self.assertEqual(len(artists), 32)
+        self.assertEqual(len(artists), 37)
         self.assertEqual(artists.count("Homare"), 1)
         self.assertEqual(artists, sorted(artists, key=str.casefold))
 

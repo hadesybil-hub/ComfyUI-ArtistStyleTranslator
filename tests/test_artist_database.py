@@ -82,7 +82,7 @@ class ArtistDatabaseTests(unittest.TestCase):
     def test_all_artists_are_preserved_and_sorted_after_v14_expansion(self):
         artists = database.list_artists()
         self.assertIsInstance(artists, list)
-        self.assertEqual(len(artists), 32)
+        self.assertEqual(len(artists), 37)
         self.assertIn("Homare", artists)
         self.assertEqual(artists, sorted(artists, key=str.casefold))
 

@@ -209,7 +209,7 @@ class KnowledgeBaseLoaderTests(unittest.TestCase):
 
     def test_list_artists_preserves_count_and_sort_order(self):
         artists = database.list_artists()
-        self.assertEqual(len(artists), 32)
+        self.assertEqual(len(artists), 37)
         self.assertEqual(artists, sorted(artists, key=str.casefold))
 
 

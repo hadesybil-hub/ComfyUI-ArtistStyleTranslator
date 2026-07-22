@@ -577,6 +577,687 @@ KNOWLEDGE_RECORDS = (
             "fabric ornament armor materials and mechanical construction",
         ),
     ),
+    _curated_record(
+        artist_id="oda-non",
+        canonical_name="Oda Non",
+        display_name="織田non",
+        aliases=("odanondesu",),
+        localized_names={
+            "ja": ("織田non", "おだ のん"),
+            "zh-Hans": ("织田non",),
+        },
+        category=("illustrator", "manga_artist", "character_designer"),
+        metadata={
+            "source": "curated_public_source_review",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T00:00:00+08:00",
+            "updated_at": "2026-07-22T00:00:00+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        profile_confidence=0.82,
+        category_confidence={
+            "medium": 0.85,
+            "genre": 0.80,
+            "subject_focus": 0.85,
+            "linework": 0.85,
+            "shape_language": 0.80,
+            "facial_design": 0.82,
+            "anatomy": 0.85,
+            "rendering": 0.85,
+            "shading": 0.80,
+            "coloring": 0.80,
+            "palette": 0.78,
+            "lighting": 0.78,
+            "composition": 0.82,
+            "environment": 0.72,
+            "clothing": 0.82,
+            "mood": 0.78,
+            "detail_emphasis": 0.85,
+        },
+        evidence=(
+            {
+                "evidence_id": "oda-non:2012-2019:published-illustrations",
+                "type": "cross_work_synthesis",
+                "scope": "profile",
+                "summary": (
+                    "Six public illustrations spanning concept sketches, an "
+                    "ensemble scene, simple and elaborate full-body designs, "
+                    "a dark fantasy poster, and an action pose consistently "
+                    "show controlled contours, mature proportions, clear "
+                    "silhouettes, and character-dominant framing."
+                ),
+                "reference": (
+                    "https://www.pixiv.net/artworks/27022346; "
+                    "https://www.pixiv.net/artworks/51693565; "
+                    "https://www.pixiv.net/artworks/63197203; "
+                    "https://www.pixiv.net/artworks/69469772; "
+                    "https://www.pixiv.net/artworks/70913284; "
+                    "https://www.pixiv.net/artworks/77842170"
+                ),
+            },
+            {
+                "evidence_id": "oda-non:commercial-character-design",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "Public creator credits for fantasy and game character "
+                    "design corroborate the recurring emphasis on readable "
+                    "figure silhouettes, fitted costumes, material accents, "
+                    "and polished presentation."
+                ),
+                "reference": (
+                    "https://bgm.tv/person/10253; "
+                    "https://bikini-warriors.com/anime/news/n010.php"
+                ),
+            },
+        ),
+        medium=(
+            "polished digital character illustration",
+            "clean concept and promotional character art",
+        ),
+        genre=(
+            "sensual fantasy character design",
+            "action-oriented speculative illustration",
+        ),
+        subject_focus=(
+            "mature feminine figures",
+            "isolated full-body and three-quarter character presentations",
+        ),
+        linework=(
+            "clean controlled dark contours",
+            "tapered hair and costume lines",
+        ),
+        shape_language=(
+            "elongated flowing silhouettes",
+            "broad curves balanced by angular costume accents",
+        ),
+        facial_design=(
+            "refined adult facial proportions",
+            "narrow almond eyes and controlled mouth shapes",
+        ),
+        anatomy=(
+            "statuesque mature proportions",
+            "pronounced curves and long articulated limbs",
+        ),
+        rendering=(
+            "smooth digital surface finish",
+            "crisp separation of skin fabric and hard materials",
+        ),
+        shading=(
+            "restrained cel-to-gradient form modeling",
+            "firm occlusion around folds and layered costume parts",
+        ),
+        coloring=(
+            "saturated local colors",
+            "warm skin separated from cooler costume colors",
+        ),
+        palette=(
+            "deep violets blues and muted neutrals",
+            "selective red and gold accents",
+        ),
+        lighting=(
+            "soft frontal studio illumination",
+            "selective rim and material highlights",
+        ),
+        composition=(
+            "figure-dominant vertical framing",
+            "diagonal gestures and tightly cropped action",
+        ),
+        environment=(
+            "sparse graphic or atmospheric backdrops",
+            "secondary architecture kept behind the figure",
+        ),
+        clothing=(
+            "fitted fantasy and military costumes",
+            "layered fabric armor and accessory construction",
+        ),
+        mood=("poised and sensual", "assertive and dramatic"),
+        detail_emphasis=(
+            "faces hair and anatomy contours",
+            "costume seams ornaments and material changes",
+        ),
+    ),
+    _curated_record(
+        artist_id="izayoi-seishin",
+        canonical_name="十六夜清心",
+        display_name="十六夜清心",
+        aliases=(),
+        localized_names={},
+        category=("manga_artist", "illustrator"),
+        metadata={
+            "source": "curated_public_source_review",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T00:00:00+08:00",
+            "updated_at": "2026-07-22T00:00:00+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        profile_confidence=0.82,
+        category_confidence={
+            "medium": 0.85,
+            "genre": 0.82,
+            "subject_focus": 0.85,
+            "linework": 0.85,
+            "shape_language": 0.82,
+            "facial_design": 0.88,
+            "anatomy": 0.85,
+            "rendering": 0.82,
+            "shading": 0.82,
+            "coloring": 0.78,
+            "palette": 0.75,
+            "lighting": 0.75,
+            "composition": 0.82,
+            "environment": 0.78,
+            "clothing": 0.82,
+            "mood": 0.78,
+            "detail_emphasis": 0.85,
+        },
+        evidence=(
+            {
+                "evidence_id": "izayoi-seishin:2010:manga-and-study",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "A published monochrome manga page and character study "
+                    "show naturalistic adult facial construction, deliberate "
+                    "contours, grounded proportions, dense environmental tone, "
+                    "and careful garment definition."
+                ),
+                "reference": (
+                    "https://www.pixiv.net/artworks/3985777; "
+                    "https://www.pixiv.net/artworks/4039836"
+                ),
+            },
+            {
+                "evidence_id": "izayoi-seishin:2023-2024:character-goods",
+                "type": "cross_work_synthesis",
+                "scope": "profile",
+                "summary": (
+                    "Four later character-goods illustrations retain mature "
+                    "faces, upright figure staging, smooth volumetric modeling, "
+                    "muted formal clothing, and restrained expressions across "
+                    "profile, seated, and full-body presentations."
+                ),
+                "reference": (
+                    "https://www.pixiv.net/artworks/107265374; "
+                    "https://www.pixiv.net/artworks/110101008; "
+                    "https://www.pixiv.net/artworks/115782596; "
+                    "https://www.pixiv.net/artworks/123920228; "
+                    "https://bangumi.tv/person/44371"
+                ),
+            },
+        ),
+        medium=(
+            "detailed digital manga illustration",
+            "monochrome narrative line art",
+        ),
+        genre=(
+            "adult realist character portraiture",
+            "grounded dramatic manga",
+        ),
+        subject_focus=(
+            "mature women in formal uniforms and fitted costumes",
+            "profile close-ups and full-body portraits",
+        ),
+        linework=(
+            "fine deliberate contours",
+            "dense hatching and tonal edge work in monochrome scenes",
+        ),
+        shape_language=(
+            "mature rounded figures with upright silhouettes",
+            "structured garment shapes",
+        ),
+        facial_design=(
+            "naturalistic adult facial proportions",
+            "narrow eyes with defined noses and lips",
+        ),
+        anatomy=(
+            "grounded weight-bearing proportions",
+            "full-bodied curvature with carefully drawn hands and knees",
+        ),
+        rendering=(
+            "smooth realistic digital modeling",
+            "crisp graphic separation in manga panels",
+        ),
+        shading=(
+            "gradual volumetric shadow transitions",
+            "hatched and screentone texture in monochrome work",
+        ),
+        coloring=(
+            "warm skin against muted garment colors",
+            "controlled low-to-medium saturation",
+        ),
+        palette=(
+            "burgundy olive cream and charcoal",
+            "restrained warm neutrals",
+        ),
+        lighting=(
+            "diffuse studio illumination",
+            "low directional modeling across faces and limbs",
+        ),
+        composition=(
+            "centered formal portrait arrangements",
+            "stable vertical profile and full-body framing",
+        ),
+        environment=(
+            "architectural and urban photographic backdrops",
+            "detailed everyday street settings in manga panels",
+        ),
+        clothing=(
+            "tailored uniforms dresses and fitted everyday garments",
+            "precise seams and restrained fold patterns",
+        ),
+        mood=("reserved and mature", "theatrical and quietly tense"),
+        detail_emphasis=(
+            "facial structure hands and posture",
+            "garment construction and body volume",
+        ),
+    ),
+    _curated_record(
+        artist_id="linda",
+        canonical_name="LINDA",
+        display_name="LINDA",
+        aliases=("lindacomic",),
+        localized_names={"ja": ("リンダ",)},
+        category=("manga_artist", "illustrator"),
+        metadata={
+            "source": "curated_public_source_review",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T00:00:00+08:00",
+            "updated_at": "2026-07-22T00:00:00+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        profile_confidence=0.80,
+        category_confidence={
+            "medium": 0.85,
+            "genre": 0.82,
+            "subject_focus": 0.88,
+            "linework": 0.82,
+            "shape_language": 0.85,
+            "facial_design": 0.82,
+            "anatomy": 0.88,
+            "rendering": 0.82,
+            "shading": 0.80,
+            "coloring": 0.80,
+            "palette": 0.78,
+            "lighting": 0.75,
+            "composition": 0.85,
+            "environment": 0.72,
+            "clothing": 0.78,
+            "mood": 0.80,
+            "detail_emphasis": 0.85,
+        },
+        evidence=(
+            {
+                "evidence_id": "linda:manga-page-and-cover",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "A public manga page and a published volume cover show "
+                    "firm clean contours, expressive mature faces, pronounced "
+                    "curvilinear anatomy, close figure crops, smooth skin "
+                    "modeling, and strongly separated fabric surfaces."
+                ),
+                "reference": (
+                    "https://www.pixiv.net/artworks/12731699; "
+                    "https://manba.co.jp/authors/581"
+                ),
+            },
+            {
+                "evidence_id": "linda:1999-present:published-work-catalog",
+                "type": "cross_work_synthesis",
+                "scope": "profile",
+                "summary": (
+                    "Public author and work catalogs verify a long-running "
+                    "body of manga and illustration across short-form, serial, "
+                    "domestic drama, and fantasy contexts, supporting the "
+                    "profile's emphasis on stable character-led presentation."
+                ),
+                "reference": (
+                    "https://mangaseek.net/person/9455.html; "
+                    "https://bgm.tv/person/13107/works; "
+                    "https://manba.co.jp/authors/581"
+                ),
+            },
+        ),
+        medium=(
+            "commercial manga illustration",
+            "polished full-color cover art",
+        ),
+        genre=(
+            "contemporary adult relationship drama",
+            "romantic domestic character narrative",
+        ),
+        subject_focus=(
+            "mature curvilinear women",
+            "expressive close-ups and intimate figure presentations",
+        ),
+        linework=(
+            "firm clean contours",
+            "bold hair and silhouette edges",
+        ),
+        shape_language=(
+            "pronounced hourglass curves",
+            "rounded facial and body shapes with flowing hair masses",
+        ),
+        facial_design=(
+            "soft adult faces with defined lashes",
+            "full lips and emotionally readable eyes",
+        ),
+        anatomy=(
+            "exaggerated voluptuous proportions",
+            "flexible torsos and sweeping limb curves",
+        ),
+        rendering=(
+            "smooth glossy skin rendering",
+            "strong separation of hair clothing and skin surfaces",
+        ),
+        shading=(
+            "soft gradient form modeling",
+            "firm shadow blocks and bright specular accents",
+        ),
+        coloring=(
+            "warm peach skin and deep dark hair",
+            "saturated lip and blush accents",
+        ),
+        palette=(
+            "warm flesh chocolate charcoal and muted gray",
+            "selective magenta and red accents",
+        ),
+        lighting=(
+            "soft frontal studio illumination",
+            "gloss highlights and clear figure separation",
+        ),
+        composition=(
+            "tight figure-dominant cover crops",
+            "diagonal reclining body lines and face-led manga panels",
+        ),
+        environment=(
+            "sparse graphic cover backgrounds",
+            "recognizable everyday interiors in narrative panels",
+        ),
+        clothing=(
+            "fitted contemporary garments",
+            "tactile knit surfaces and emphasized fabric tension",
+        ),
+        mood=("intimate and provocative", "emotionally heightened"),
+        detail_emphasis=(
+            "facial expression hair curls and skin highlights",
+            "body contours and fabric tension",
+        ),
+    ),
+    _curated_record(
+        artist_id="hyji",
+        canonical_name="灰司",
+        display_name="灰司",
+        aliases=("hyji", "hyjihyji"),
+        localized_names={"ja": ("ハイジ",)},
+        category=("manga_artist", "illustrator"),
+        metadata={
+            "source": "curated_public_source_review",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T00:00:00+08:00",
+            "updated_at": "2026-07-22T00:00:00+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        profile_confidence=0.78,
+        category_confidence={
+            "medium": 0.82,
+            "genre": 0.75,
+            "subject_focus": 0.82,
+            "linework": 0.85,
+            "shape_language": 0.78,
+            "facial_design": 0.88,
+            "anatomy": 0.78,
+            "rendering": 0.78,
+            "shading": 0.80,
+            "coloring": 0.78,
+            "palette": 0.75,
+            "lighting": 0.75,
+            "composition": 0.82,
+            "environment": 0.68,
+            "clothing": 0.72,
+            "mood": 0.82,
+            "detail_emphasis": 0.85,
+        },
+        evidence=(
+            {
+                "evidence_id": "hyji:2010-2013:public-character-studies",
+                "type": "cross_work_synthesis",
+                "scope": "profile",
+                "summary": (
+                    "Six public studies across portraits, figure sheets, "
+                    "ensemble sketches, and paired action scenes repeatedly "
+                    "use expressive eyes, tapered faces, energetic pencil-like "
+                    "lines, cross-hatching, and open negative space."
+                ),
+                "reference": (
+                    "https://www.pixiv.net/artworks/17647416; "
+                    "https://www.pixiv.net/artworks/23125576; "
+                    "https://www.pixiv.net/artworks/26713207; "
+                    "https://www.pixiv.net/artworks/32289971; "
+                    "https://www.pixiv.net/artworks/38206550; "
+                    "https://www.pixiv.net/artworks/40309051"
+                ),
+            },
+            {
+                "evidence_id": "hyji:current:published-creator-page",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "The current public creator page retains face-led close "
+                    "cropping, warm blush, glossy eyes, soft airbrushed skin, "
+                    "dark hair masses, and emotionally heightened expressions."
+                ),
+                "reference": (
+                    "https://fantia.jp/fanclubs/4039; "
+                    "https://mangaseek.net/person/9472.html"
+                ),
+            },
+        ),
+        medium=(
+            "digital manga illustration",
+            "sketch-centered character studies and color portraits",
+        ),
+        genre=(
+            "contemporary adult character drama",
+            "expressive character portraiture",
+        ),
+        subject_focus=(
+            "mature women in close portrait crops",
+            "expressive faces and paired figure studies",
+        ),
+        linework=(
+            "loose energetic sketch lines",
+            "precise facial contours with cross-hatched accents",
+        ),
+        shape_language=(
+            "soft rounded facial shapes",
+            "sweeping hair masses and gesture arcs",
+        ),
+        facial_design=(
+            "large reflective eyes with defined lashes",
+            "softly pointed chins and pronounced blush",
+        ),
+        anatomy=(
+            "naturalistic mature proportions",
+            "flexible gesture with close-cropped figure emphasis",
+        ),
+        rendering=(
+            "soft airbrushed digital finish",
+            "visible sketch texture retained in character studies",
+        ),
+        shading=(
+            "feathered gradient shadows",
+            "cross-hatched construction and occlusion marks",
+        ),
+        coloring=(
+            "warm blush and luminous skin",
+            "dark brown or black hair with selective saturated accents",
+        ),
+        palette=(
+            "rose pink warm brown and pale neutrals",
+            "occasional deep red and green contrasts",
+        ),
+        lighting=(
+            "diffuse frontal glow",
+            "soft bloom with limited hard shadow edges",
+        ),
+        composition=(
+            "face-led close crops",
+            "clustered character sheets with broad white negative space",
+        ),
+        environment=(
+            "minimal or abstract backgrounds",
+            "faint atmospheric brush forms",
+        ),
+        clothing=(
+            "contemporary casual and formal garments",
+            "simplified folds supporting facial focus",
+        ),
+        mood=("intimate and vulnerable", "emotionally heightened"),
+        detail_emphasis=(
+            "eyes lashes lips and blush",
+            "hair strands and expressive line texture",
+        ),
+    ),
+    _curated_record(
+        artist_id="aoki-seishin",
+        canonical_name="碧木誠心",
+        display_name="碧木誠心",
+        aliases=(),
+        localized_names={"ja": ("アオキセイシン",)},
+        category=("manga_artist",),
+        metadata={
+            "source": "curated_public_source_review",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T00:00:00+08:00",
+            "updated_at": "2026-07-22T00:00:00+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        profile_confidence=0.80,
+        category_confidence={
+            "medium": 0.82,
+            "genre": 0.78,
+            "subject_focus": 0.85,
+            "linework": 0.82,
+            "shape_language": 0.82,
+            "facial_design": 0.82,
+            "anatomy": 0.85,
+            "rendering": 0.82,
+            "shading": 0.80,
+            "coloring": 0.80,
+            "palette": 0.78,
+            "lighting": 0.78,
+            "composition": 0.85,
+            "environment": 0.72,
+            "clothing": 0.80,
+            "mood": 0.78,
+            "detail_emphasis": 0.82,
+        },
+        evidence=(
+            {
+                "evidence_id": "aoki-seishin:2005-2010:published-books",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "Two published volume covers from 2005 and 2010 show close "
+                    "figure crops, rounded mature anatomy, clean contours, dark "
+                    "hair masses, glossy skin highlights, and fitted uniform-like "
+                    "clothing across distinct character presentations."
+                ),
+                "reference": (
+                    "https://www.suruga-ya.jp/product/detail/XA10544; "
+                    "https://www.eslite.com/product/1001357605473586; "
+                    "https://perry-r.hatenablog.com/entry/20101017/p6"
+                ),
+            },
+            {
+                "evidence_id": "aoki-seishin:2026:serialized-cover",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "A current five-part serialized cover presents a clean "
+                    "seated character with compact facial design, rounded "
+                    "foreshortened limbs, smooth gradients, cool neutral color, "
+                    "school attire, and an asymmetric text-and-figure layout."
+                ),
+                "reference": (
+                    "https://ebookstore.sony.jp/title/11407662/; "
+                    "https://www.cmoa.jp/title/353451/vol/4/"
+                ),
+            },
+        ),
+        medium=(
+            "clean digital manga illustration",
+            "commercial serialized cover art",
+        ),
+        genre=(
+            "contemporary youth relationship drama",
+            "adult character-centered narrative",
+        ),
+        subject_focus=(
+            "mature women",
+            "close-cropped seated and reclining character presentations",
+        ),
+        linework=(
+            "clean medium-weight contours",
+            "controlled hair and clothing lines",
+        ),
+        shape_language=(
+            "rounded limbs and strongly curved torso shapes",
+            "emphasized foreground foreshortening",
+        ),
+        facial_design=(
+            "small oval faces and straight brows",
+            "narrow luminous eyes with restrained mouths",
+        ),
+        anatomy=(
+            "solid voluptuous proportions",
+            "emphasized curves and foreshortened limbs",
+        ),
+        rendering=(
+            "smooth glossy digital skin finish",
+            "flat-to-gradient fabric and hair rendering",
+        ),
+        shading=(
+            "broad soft gradient modeling with bright highlights",
+            "darker occlusion around hair limbs and garment folds",
+        ),
+        coloring=(
+            "warm skin and deep dark hair",
+            "neutral clothing with saturated uniform accents",
+        ),
+        palette=(
+            "warm skin against deep navy charcoal and white",
+            "selective red cyan and violet accents",
+        ),
+        lighting=(
+            "soft frontal illumination",
+            "bright glossy highlights and cool edge separation",
+        ),
+        composition=(
+            "seated figure angled toward the viewer",
+            "large foreground limb perspective and asymmetric title framing",
+        ),
+        environment=(
+            "simplified interior cues",
+            "neutral graphic and text-led backdrops",
+        ),
+        clothing=(
+            "fitted school and workplace uniforms",
+            "crisp blouses pleated skirts bows and small accessories",
+        ),
+        mood=("direct and provocative", "coolly self-possessed"),
+        detail_emphasis=(
+            "eyes blush and hair gloss",
+            "body foreshortening and uniform folds",
+        ),
+    ),
 )
 
 
