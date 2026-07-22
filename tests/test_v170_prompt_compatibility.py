@@ -33,6 +33,14 @@ database, prompt_builder = load_project_modules()
 
 class V170PromptCompatibilityTests(unittest.TestCase):
     def test_all_31_artists_models_and_detail_levels_match_v165_baseline(self):
+        legacy_artists = sorted(
+            (
+                record["canonical_name"]
+                for record in database.KNOWLEDGE_RECORDS
+                if record["metadata"]["source"] == "legacy_migration"
+            ),
+            key=str.casefold,
+        )
         rows = [
             (
                 artist,
@@ -40,7 +48,7 @@ class V170PromptCompatibilityTests(unittest.TestCase):
                 detail,
                 prompt_builder.build_prompt(artist, model, detail),
             )
-            for artist in database.list_artists()
+            for artist in legacy_artists
             for model in prompt_builder.TARGET_MODELS
             for detail in prompt_builder.DETAIL_LEVELS
         ]

@@ -51,8 +51,13 @@ def unique_record(name="V1.7 Validation Artist", artist_id="v17-validation-artis
 
 class KnowledgeRecordSchemaTests(unittest.TestCase):
     def test_all_legacy_records_use_complete_v170_schema(self):
-        self.assertEqual(len(database.KNOWLEDGE_RECORDS), 31)
-        for record in database.KNOWLEDGE_RECORDS:
+        legacy_records = tuple(
+            record
+            for record in database.KNOWLEDGE_RECORDS
+            if record["metadata"]["source"] == "legacy_migration"
+        )
+        self.assertEqual(len(legacy_records), 31)
+        for record in legacy_records:
             self.assertIs(knowledge.validate_knowledge_record(record), record)
             self.assertEqual(set(record), set(knowledge.KNOWLEDGE_RECORD_FIELDS))
             self.assertEqual(
@@ -204,14 +209,19 @@ class KnowledgeBaseLoaderTests(unittest.TestCase):
 
     def test_list_artists_preserves_count_and_sort_order(self):
         artists = database.list_artists()
-        self.assertEqual(len(artists), 31)
+        self.assertEqual(len(artists), 32)
         self.assertEqual(artists, sorted(artists, key=str.casefold))
 
 
 class KnowledgeProjectionTests(unittest.TestCase):
     def test_projection_matches_existing_builtin_provider_for_all_artists(self):
         provider = builtin_provider.BuiltinSemanticProvider()
-        for artist in database.list_artists():
+        legacy_artists = tuple(
+            record["canonical_name"]
+            for record in database.KNOWLEDGE_RECORDS
+            if record["metadata"]["source"] == "legacy_migration"
+        )
+        for artist in legacy_artists:
             with self.subTest(artist=artist):
                 projected = database.project_artist_profile(artist)
                 existing = provider.get_profile(artist)

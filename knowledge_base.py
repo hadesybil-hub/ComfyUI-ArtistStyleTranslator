@@ -71,9 +71,31 @@ SUPPORTED_EVIDENCE_TYPES = (
     "uncertain_inference",
     "legacy_migration",
 )
+ARTIST_REVIEW_CHECKLIST_FIELDS = (
+    "identity_verified",
+    "evidence_verified",
+    "semantic_profile_verified",
+    "runtime_verified",
+    "publish_ready",
+)
 
 _ARTIST_ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 _VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
+_STATIC_PROMPT_PATTERNS = (
+    re.compile(r"\bin\s+the\s+style\s+of\b", re.IGNORECASE),
+    re.compile(
+        r"\b(?:masterpiece|best\s+quality|worst\s+quality|negative\s+prompt|"
+        r"prompt\s+template)\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"(?:^|\s)--(?:ar|style|stylize)\b", re.IGNORECASE),
+    re.compile(r"<(?:lora|lyco|embedding):", re.IGNORECASE),
+    re.compile(
+        r"\b(?:steps|sampler|cfg(?:\s+scale)?|seed)\s*:",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\b(?:4k|8k|16k|uhd)\b", re.IGNORECASE),
+)
 
 
 class KnowledgeRecordValidationError(ValueError):
@@ -91,6 +113,40 @@ def normalize_artist_name(name):
         return "".join(character for character in text if character.isalnum())
     except Exception:
         return ""
+
+
+def _name_tokens(value):
+    normalized = unicodedata.normalize("NFKC", str(value or "")).casefold()
+    tokens = []
+    current = []
+    for character in normalized:
+        if character.isalnum():
+            current.append(character)
+        elif current:
+            tokens.append("".join(current))
+            current = []
+    if current:
+        tokens.append("".join(current))
+    return tuple(tokens)
+
+
+def _contains_name(value, names):
+    value_tokens = _name_tokens(value)
+    normalized_value = normalize_artist_name(value)
+    for name in names:
+        name_tokens = _name_tokens(name)
+        if not name_tokens:
+            continue
+        width = len(name_tokens)
+        if any(
+            value_tokens[index:index + width] == name_tokens
+            for index in range(len(value_tokens) - width + 1)
+        ):
+            return True
+        normalized_name = normalize_artist_name(name)
+        if len(normalized_name) >= 5 and normalized_name in normalized_value:
+            return True
+    return False
 
 
 def _require_exact_fields(value, expected, field_name):
@@ -214,7 +270,21 @@ def _validate_evidence(evidence):
         _require_text(item["reference"], f"{field_name}.reference")
 
 
-def _validate_semantic(semantic):
+def _validate_style_descriptions(style_profile, artist_names):
+    for category in STYLE_PROFILE_FIELDS:
+        for index, description in enumerate(style_profile[category]):
+            field_name = f"semantic.style_profile.{category}[{index}]"
+            if _contains_name(description, artist_names):
+                raise KnowledgeRecordValidationError(
+                    f"{field_name} must not contain an artist name"
+                )
+            if any(pattern.search(description) for pattern in _STATIC_PROMPT_PATTERNS):
+                raise KnowledgeRecordValidationError(
+                    f"{field_name} contains static prompt syntax"
+                )
+
+
+def _validate_semantic(semantic, artist_names):
     _require_exact_fields(semantic, KNOWLEDGE_SEMANTIC_FIELDS, "semantic")
     style_profile = semantic["style_profile"]
     _require_exact_fields(style_profile, STYLE_PROFILE_FIELDS, "semantic.style_profile")
@@ -223,6 +293,7 @@ def _validate_semantic(semantic):
             style_profile[field_name],
             f"semantic.style_profile.{field_name}",
         )
+    _validate_style_descriptions(style_profile, artist_names)
 
     _require_confidence(
         semantic["profile_confidence"],
@@ -266,7 +337,19 @@ def validate_knowledge_record(record):
         _require_text_tuple(names, f"localized_names.{language}")
     _require_text_tuple(record["category"], "category")
     _validate_metadata(record["metadata"])
-    _validate_semantic(record["semantic"])
+    _validate_semantic(
+        record["semantic"],
+        (
+            record["canonical_name"],
+            record["display_name"],
+            *record["aliases"],
+            *(
+                name
+                for names in record["localized_names"].values()
+                for name in names
+            ),
+        ),
+    )
     return record
 
 
@@ -291,16 +374,19 @@ def legacy_artist_view(record):
     }
 
 
-def project_semantic_style_profile(record):
+def project_semantic_style_profile(record, *, allow_reviewed=False):
     """Project a published record into existing semantic engine types.
 
     Structured research evidence remains in the knowledge record.  The runtime
     projection intentionally preserves the V1.6 built-in provenance contract.
     """
     validate_knowledge_record(record)
-    if record["metadata"]["review_status"] != "published":
+    allowed_statuses = (
+        ("reviewed", "published") if allow_reviewed else ("published",)
+    )
+    if record["metadata"]["review_status"] not in allowed_statuses:
         raise KnowledgeRecordValidationError(
-            "only published knowledge records can enter runtime"
+            "knowledge record is not eligible for this runtime"
         )
     try:
         from .style_engine import (
@@ -346,6 +432,7 @@ class KnowledgeBaseLoader:
         self._records = deepcopy(tuple(records))
         self._record_by_id = {}
         self._published_name_index = {}
+        self._review_name_index = {}
         self._validate_collection()
 
     def _validate_collection(self):
@@ -381,15 +468,23 @@ class KnowledgeBaseLoader:
 
         for key, artist_id in normalized_names.items():
             record = self._record_by_id[artist_id]
-            if record["metadata"]["review_status"] == "published":
+            review_status = record["metadata"]["review_status"]
+            if review_status in ("reviewed", "published"):
+                self._review_name_index[key] = record
+            if review_status == "published":
                 self._published_name_index[key] = record
 
     def get_artist(self, name):
         record = self._published_name_index.get(normalize_artist_name(name))
         return legacy_artist_view(record) if record is not None else None
 
-    def get_knowledge_record(self, name):
-        record = self._published_name_index.get(normalize_artist_name(name))
+    def get_knowledge_record(self, name, *, include_reviewed=False):
+        index = (
+            self._review_name_index
+            if include_reviewed
+            else self._published_name_index
+        )
+        record = index.get(normalize_artist_name(name))
         return deepcopy(record) if record is not None else None
 
     def list_artists(self):
@@ -410,6 +505,25 @@ class KnowledgeBaseLoader:
         )
 
 
+def build_artist_review_checklist(record, *, existing_records=()):
+    """Return data-level review gates without storing mutable checklist flags.
+
+    ``runtime_verified`` means the record is eligible for the internal review
+    projection.  It does not claim that a manual ComfyUI workflow was tested.
+    """
+    validate_knowledge_record(record)
+    KnowledgeBaseLoader((*tuple(existing_records), record))
+    review_status = record["metadata"]["review_status"]
+    runtime_verified = review_status in ("reviewed", "published")
+    return {
+        "identity_verified": True,
+        "evidence_verified": True,
+        "semantic_profile_verified": True,
+        "runtime_verified": runtime_verified,
+        "publish_ready": runtime_verified,
+    }
+
+
 __all__ = [
     "STYLE_PROFILE_FIELDS",
     "KNOWLEDGE_RECORD_FIELDS",
@@ -419,6 +533,7 @@ __all__ = [
     "SUPPORTED_PROFILE_SCHEMA_VERSIONS",
     "SUPPORTED_REVIEW_STATUSES",
     "SUPPORTED_EVIDENCE_TYPES",
+    "ARTIST_REVIEW_CHECKLIST_FIELDS",
     "KnowledgeRecordValidationError",
     "KnowledgeBaseConflictError",
     "KnowledgeBaseLoader",
@@ -426,4 +541,5 @@ __all__ = [
     "validate_knowledge_record",
     "legacy_artist_view",
     "project_semantic_style_profile",
+    "build_artist_review_checklist",
 ]

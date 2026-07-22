@@ -86,6 +86,50 @@ def _record(*, artist_id, canonical_name, aliases, **profile_values):
     }
 
 
+def _curated_record(
+    *,
+    artist_id,
+    canonical_name,
+    display_name,
+    aliases,
+    localized_names,
+    category,
+    metadata,
+    profile_confidence,
+    category_confidence,
+    evidence,
+    **profile_values,
+):
+    """Build a researched record while keeping all 17 dimensions named."""
+    if set(profile_values) != set(STYLE_PROFILE_FIELDS):
+        missing = sorted(set(STYLE_PROFILE_FIELDS) - set(profile_values))
+        unknown = sorted(set(profile_values) - set(STYLE_PROFILE_FIELDS))
+        raise ValueError(
+            f"Style profile fields are invalid; missing={missing}, unknown={unknown}"
+        )
+    return {
+        "artist_id": artist_id,
+        "canonical_name": canonical_name,
+        "display_name": display_name,
+        "aliases": tuple(aliases),
+        "localized_names": {
+            language: tuple(names)
+            for language, names in localized_names.items()
+        },
+        "category": tuple(category),
+        "metadata": dict(metadata),
+        "semantic": {
+            "style_profile": {
+                field: _phrases(profile_values[field])
+                for field in STYLE_PROFILE_FIELDS
+            },
+            "profile_confidence": profile_confidence,
+            "category_confidence": dict(category_confidence),
+            "evidence": tuple(evidence),
+        },
+    }
+
+
 KNOWLEDGE_RECORDS = (
     _record(
         artist_id='yaegashi-nan', canonical_name="Yaegashi Nan", aliases=("YaegashiNan", "Yaegashi-Nan"),
@@ -365,6 +409,173 @@ KNOWLEDGE_RECORDS = (
         coloring="saturated nuanced coloring; radiant magical effects", palette="deep jewel-tone palette; controlled warm-cool contrast", lighting="dramatic magical illumination; concentrated glow and rim light",
         composition="dynamic layered composition; swirling directional movement", environment="ornate fantasy architecture; luminous atmospheric depth", clothing="elaborate armor and robes; intricate metal and fabric motifs",
         mood="majestic; mysterious", detail_emphasis="ornament; color transitions; armor detail; magical light",
+    ),
+    _curated_record(
+        artist_id="homare",
+        canonical_name="Homare",
+        display_name="Homare",
+        aliases=("homare_works",),
+        localized_names={"ja": ("誉",)},
+        category=("illustrator", "character_designer"),
+        metadata={
+            "source": "curated_primary_source_review",
+            "version": "1.0.0",
+            "created_at": "2026-07-22T00:00:00+08:00",
+            "updated_at": "2026-07-22T00:00:00+08:00",
+            "profile_schema_version": "1.0",
+            "review_status": "published",
+        },
+        profile_confidence=0.85,
+        category_confidence={
+            "medium": 0.90,
+            "genre": 0.85,
+            "subject_focus": 0.90,
+            "linework": 0.85,
+            "shape_language": 0.85,
+            "facial_design": 0.85,
+            "anatomy": 0.85,
+            "rendering": 0.90,
+            "shading": 0.85,
+            "coloring": 0.85,
+            "palette": 0.80,
+            "lighting": 0.85,
+            "composition": 0.90,
+            "environment": 0.80,
+            "clothing": 0.90,
+            "mood": 0.80,
+            "detail_emphasis": 0.90,
+        },
+        evidence=(
+            {
+                "evidence_id": "homare:2019-2020:fantasy-character-cards",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "Seiros, Azura, and Eremiya show character-led vertical "
+                    "framing, refined anime-influenced faces, controlled "
+                    "contours, layered garments, and carefully separated "
+                    "fabric and metal surfaces."
+                ),
+                "reference": (
+                    "https://homareworks.blog.fc2.com/blog-entry-40.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-42.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-45.html"
+                ),
+            },
+            {
+                "evidence_id": "homare:2020-2023:publishing-and-game-art",
+                "type": "cross_work_synthesis",
+                "scope": "profile",
+                "summary": (
+                    "Slave Reincarnation, Ryuho, Shinohara Yasunoshin, "
+                    "Wu Jiang, and the Touhou LostWord card support polished "
+                    "painterly modeling, readable silhouettes, grounded "
+                    "poses, nuanced materials, and restrained atmospheric "
+                    "settings across publishing and game contexts."
+                ),
+                "reference": (
+                    "https://homareworks.blog.fc2.com/blog-entry-46.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-61.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-65.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-73.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-74.html"
+                ),
+            },
+            {
+                "evidence_id": "homare:2023-2025:cover-and-mecha-art",
+                "type": "cross_work_synthesis",
+                "scope": "profile",
+                "summary": (
+                    "Black Canary, Optimus Prime, and Banagher with Unicorn "
+                    "Gundam extend the same figure-first hierarchy and "
+                    "material precision into comic covers and mechanical "
+                    "subjects, with diagonal action and selective rim glow."
+                ),
+                "reference": (
+                    "https://homareworks.blog.fc2.com/blog-entry-75.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-80.html; "
+                    "https://homareworks.blog.fc2.com/blog-entry-81.html"
+                ),
+            },
+            {
+                "evidence_id": "homare:2024:historical-character",
+                "type": "direct_observation",
+                "scope": "profile",
+                "summary": (
+                    "Zou Ji reinforces the recurring emphasis on composed "
+                    "character staging, ornate costume construction, cool "
+                    "muted color, and detailed hands and accessories."
+                ),
+                "reference": (
+                    "https://homareworks.blog.fc2.com/blog-entry-77.html"
+                ),
+            },
+        ),
+        medium=(
+            "polished digital character illustration",
+            "commercial card and cover art",
+        ),
+        genre=(
+            "fantasy and science-fiction character key art",
+            "historical character illustration",
+        ),
+        subject_focus=(
+            "single character portraits",
+            "heroic figures paired with emblematic equipment or machinery",
+        ),
+        linework=(
+            "fine controlled contours",
+            "selective textured edge accents",
+        ),
+        shape_language=(
+            "clear figure-led silhouettes",
+            "flowing costume shapes contrasted with rigid armor and machinery",
+        ),
+        facial_design=(
+            "refined anime-influenced facial features",
+            "focused eyes and restrained expressions",
+        ),
+        anatomy=(
+            "idealized mature proportions",
+            "grounded action poses with readable weight",
+        ),
+        rendering=(
+            "polished painterly rendering",
+            "careful separation of skin fabric metal and mechanical surfaces",
+        ),
+        shading=(
+            "softly blended form modeling",
+            "firm occlusion shadows around layered costume and armor",
+        ),
+        coloring=(
+            "controlled local colors with nuanced material variation",
+            "selective luminous accents",
+        ),
+        palette=(
+            "muted jewel tones and cool neutrals",
+            "selective warm highlights",
+        ),
+        lighting=(
+            "directional cinematic illumination",
+            "subtle rim light and atmospheric glow",
+        ),
+        composition=(
+            "character-centered vertical framing",
+            "diagonal action flow and strong silhouette hierarchy",
+        ),
+        environment=(
+            "restrained atmospheric architecture or landscape",
+            "graphic or hazy backdrops supporting the figure",
+        ),
+        clothing=(
+            "ornate layered historical and fantasy garments",
+            "precisely segmented armor and technical costume details",
+        ),
+        mood=("dramatic and composed", "heroic or enigmatic"),
+        detail_emphasis=(
+            "faces and hands",
+            "fabric ornament armor materials and mechanical construction",
+        ),
     ),
 )
 
