@@ -2,6 +2,23 @@
 
 ComfyUI-ArtistStyleTranslator 是一个基于 `SemanticStyleProfile` 的艺术风格翻译节点。它将画师名称或别名解析为结构化、可观察的视觉特征，再生成适合不同图像模型的提示词。
 
+## 🚀 Quick Start
+
+最快体验方式：使用 `examples/basic_artist_translation.json`。
+
+该 Workflow 展示：
+
+- Artist Style Selector
+- SemanticStyleProfile Preview
+- Artist Style Translator
+- Prompt Merge
+
+## Examples
+
+| Workflow                                 | Description                                                                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| `examples/basic_artist_translation.json` | Official basic workflow demonstrating the complete Artist Style Translator pipeline. |
+
 ## 当前版本
 
 **V1.6.5 Stable**
