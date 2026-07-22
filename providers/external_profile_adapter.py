@@ -13,6 +13,10 @@ from .external_adapter import (
     ExternalDataValidationError,
     validate_external_semantic_data,
 )
+from .provider_contract import (
+    ProviderOutputValidationError,
+    validate_provider_output,
+)
 
 
 class ExternalProfileAdapterError(SemanticProviderError):
@@ -45,13 +49,17 @@ def adapt_external_profile(profile_data):
         for item in payload["features"]
     )
     prepared = rank_features(deduplicate_features(features))
-    return SemanticStyleProfile(
+    profile = SemanticStyleProfile(
         features=prepared,
         source="external",
         confidence=payload["confidence"],
         evidence=profile_evidence,
         generated_by="external",
     )
+    try:
+        return validate_provider_output(profile)
+    except ProviderOutputValidationError as exc:
+        raise ExternalProfileAdapterError(str(exc)) from exc
 
 
 class ExternalProfileAdapter:

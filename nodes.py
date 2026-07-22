@@ -1,6 +1,30 @@
 """ComfyUI node definition for Artist Style Translator."""
 
 from .prompt_builder import DETAIL_LEVELS, TARGET_MODELS, build_prompt
+from .providers.builtin_provider import BuiltinSemanticProvider
+
+
+class ArtistStyleSelector:
+    """Select one canonical artist name exposed by the provider contract."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "artist": (
+                    BuiltinSemanticProvider().list_artists(),
+                ),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("artist_name",)
+    FUNCTION = "select_artist"
+    CATEGORY = "prompt/artist_style"
+
+    def select_artist(self, artist):
+        return (artist,)
+
 
 class ArtistStyleTranslator:
     """Build an offline visual style prompt from an artist name."""

@@ -1,5 +1,6 @@
 """Standalone import and registration smoke test."""
 
+from importlib import import_module
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
@@ -25,14 +26,31 @@ def main():
     package = load_project_package()
     assert hasattr(package, "NODE_CLASS_MAPPINGS")
     assert hasattr(package, "NODE_DISPLAY_NAME_MAPPINGS")
+    assert "ArtistStyleSelector" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStyleTranslator" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStylePromptMerge" in package.NODE_CLASS_MAPPINGS
+    assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
+        "ArtistStyleSelector"
+    ) == "Artist Style Selector"
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStyleTranslator"
     ) == "Artist Style Translator"
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStylePromptMerge"
     ) == "Artist Style Prompt Merge"
+
+    providers = import_module(f"{package.__name__}.providers")
+    selector_class = package.NODE_CLASS_MAPPINGS["ArtistStyleSelector"]
+    selector_required = selector_class.INPUT_TYPES()["required"]
+    selector_artists = selector_required["artist"][0]
+    assert selector_artists == (
+        providers.BuiltinSemanticProvider().list_artists()
+    )
+    assert selector_artists
+    assert selector_class.RETURN_TYPES == ("STRING",)
+    assert selector_class.RETURN_NAMES == ("artist_name",)
+    selected = selector_class().select_artist(selector_artists[0])
+    assert selected == (selector_artists[0],)
 
     node_class = package.NODE_CLASS_MAPPINGS["ArtistStyleTranslator"]
     node = node_class()

@@ -3,13 +3,17 @@
 from abc import ABC, abstractmethod
 
 from ..style_engine import SemanticStyleProfile
+from .provider_contract import (
+    ProviderContractError,
+    ProviderExtensionContract,
+)
 
 
-class SemanticProviderError(RuntimeError):
+class SemanticProviderError(ProviderContractError):
     """Base class for controlled semantic-provider failures."""
 
 
-class SemanticProvider(ABC):
+class SemanticProvider(ProviderExtensionContract, ABC):
     """Abstract source of provider-neutral semantic style profiles."""
 
     @abstractmethod
@@ -19,6 +23,10 @@ class SemanticProvider(ABC):
         external_data=None,
     ) -> SemanticStyleProfile:
         """Return a semantic profile or raise SemanticProviderError."""
+
+    def resolve(self, artist_name: str) -> SemanticStyleProfile | None:
+        """Expose legacy providers through the V1.6.2 extension contract."""
+        return super().resolve(artist_name)
 
     def try_get_profile(self, artist_name: str, external_data=None):
         """Return None instead of propagating a controlled provider failure."""

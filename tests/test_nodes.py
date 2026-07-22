@@ -1,9 +1,11 @@
 """Unit tests for the ComfyUI node interface."""
 
+from importlib import import_module
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
 import unittest
+from unittest.mock import patch
 
 
 def load_project_package():
@@ -22,12 +24,58 @@ def load_project_package():
     return module
 
 
-ArtistStyleTranslator = load_project_package().NODE_CLASS_MAPPINGS[
+project_package = load_project_package()
+BuiltinSemanticProvider = import_module(
+    f"{project_package.__name__}.providers"
+).BuiltinSemanticProvider
+ArtistStyleSelector = project_package.NODE_CLASS_MAPPINGS[
+    "ArtistStyleSelector"
+]
+ArtistStyleTranslator = project_package.NODE_CLASS_MAPPINGS[
     "ArtistStyleTranslator"
 ]
-ArtistStylePromptMerge = load_project_package().NODE_CLASS_MAPPINGS[
+ArtistStylePromptMerge = project_package.NODE_CLASS_MAPPINGS[
     "ArtistStylePromptMerge"
 ]
+
+
+class ArtistStyleSelectorTests(unittest.TestCase):
+    def setUp(self):
+        self.node = ArtistStyleSelector()
+
+    def test_selector_is_registered_with_display_name(self):
+        self.assertIs(
+            project_package.NODE_CLASS_MAPPINGS["ArtistStyleSelector"],
+            ArtistStyleSelector,
+        )
+        self.assertEqual(
+            project_package.NODE_DISPLAY_NAME_MAPPINGS[
+                "ArtistStyleSelector"
+            ],
+            "Artist Style Selector",
+        )
+
+    def test_artist_list_comes_from_builtin_provider_contract(self):
+        discovered = ["Provider Contract Artist"]
+        with patch.object(
+            BuiltinSemanticProvider,
+            "list_artists",
+            return_value=discovered,
+        ) as list_artists:
+            required = ArtistStyleSelector.INPUT_TYPES()["required"]
+
+        list_artists.assert_called_once_with()
+        self.assertIs(required["artist"][0], discovered)
+
+    def test_selector_interface_outputs_artist_name_string(self):
+        self.assertEqual(ArtistStyleSelector.RETURN_TYPES, ("STRING",))
+        self.assertEqual(ArtistStyleSelector.RETURN_NAMES, ("artist_name",))
+        self.assertEqual(ArtistStyleSelector.FUNCTION, "select_artist")
+
+        artist = BuiltinSemanticProvider().list_artists()[0]
+        result = self.node.select_artist(artist)
+        self.assertEqual(result, (artist,))
+        self.assertIsInstance(result[0], str)
 
 
 class ArtistStyleTranslatorTests(unittest.TestCase):

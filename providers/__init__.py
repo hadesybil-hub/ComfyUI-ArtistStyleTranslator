@@ -1,5 +1,13 @@
 """Provider-neutral semantic profile interfaces and adapters."""
 
+from .provider_contract import (
+    SUPPORTED_PROVIDER_SOURCES,
+    ProviderContractError,
+    ProviderExtensionContract,
+    ProviderOutputValidationError,
+    resolve_provider,
+    validate_provider_output,
+)
 from .base_provider import SemanticProvider, SemanticProviderError
 from .builtin_provider import BuiltinSemanticProvider
 from .external_adapter import (
@@ -24,6 +32,12 @@ from .ollama_provider import (
 )
 
 __all__ = [
+    "SUPPORTED_PROVIDER_SOURCES",
+    "ProviderContractError",
+    "ProviderExtensionContract",
+    "ProviderOutputValidationError",
+    "resolve_provider",
+    "validate_provider_output",
     "SemanticProvider",
     "SemanticProviderError",
     "BuiltinSemanticProvider",
