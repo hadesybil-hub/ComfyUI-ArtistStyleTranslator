@@ -7,7 +7,7 @@ build prompts, adapt models, or call providers.
 
 import json
 
-from style_engine import Feature, SemanticStyleProfile
+from .style_engine import Feature, SemanticStyleProfile
 
 
 SUPPORTED_FORMATS = ("text", "dict", "json")

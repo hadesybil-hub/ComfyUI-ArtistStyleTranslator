@@ -2,6 +2,7 @@
 
 from importlib import import_module
 from importlib.util import module_from_spec, spec_from_file_location
+import json
 from pathlib import Path
 import sys
 
@@ -29,6 +30,7 @@ def main():
     assert "ArtistStyleSelector" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStyleTranslator" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStyleTranslatorAdvanced" in package.NODE_CLASS_MAPPINGS
+    assert "SemanticProfilePreview" in package.NODE_CLASS_MAPPINGS
     assert "ArtistStylePromptMerge" in package.NODE_CLASS_MAPPINGS
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStyleSelector"
@@ -39,6 +41,9 @@ def main():
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStyleTranslatorAdvanced"
     ) == "Artist Style Translator Advanced"
+    assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
+        "SemanticProfilePreview"
+    ) == "Semantic Profile Preview"
     assert package.NODE_DISPLAY_NAME_MAPPINGS.get(
         "ArtistStylePromptMerge"
     ) == "Artist Style Prompt Merge"
@@ -93,6 +98,19 @@ def main():
         "Z-Image",
         "Standard",
     )
+
+    preview_class = package.NODE_CLASS_MAPPINGS["SemanticProfilePreview"]
+    preview_required = preview_class.INPUT_TYPES()["required"]
+    assert preview_required["artist_name"][0] == "STRING"
+    assert preview_class.RETURN_TYPES == ("STRING", "STRING")
+    assert preview_class.RETURN_NAMES == ("text", "json")
+    preview_text, preview_json = preview_class().preview_profile(
+        selector_artists[0]
+    )
+    preview_data = json.loads(preview_json)
+    assert preview_text.startswith("Semantic Style Profile\n")
+    assert preview_data["features"]
+    assert "prompt" not in preview_data
 
     merge_class = package.NODE_CLASS_MAPPINGS["ArtistStylePromptMerge"]
     merge_node = merge_class()

@@ -2,6 +2,8 @@
 
 from .prompt_builder import DETAIL_LEVELS, TARGET_MODELS, build_prompt
 from .providers.builtin_provider import BuiltinSemanticProvider
+from .resolver import ArtistStyleResolver
+from .profile_formatter import profile_to_json, profile_to_text
 
 
 class ArtistStyleSelector:
@@ -96,6 +98,38 @@ class ArtistStyleTranslatorAdvanced:
             artist,
             target_model,
             detail_level,
+        )
+
+
+class SemanticProfilePreview:
+    """Display the resolved semantic profile without generating a prompt."""
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "artist_name": (
+                    "STRING",
+                    {"default": "Yaegashi Nan"},
+                ),
+            },
+        }
+
+    RETURN_TYPES = ("STRING", "STRING")
+    RETURN_NAMES = ("text", "json")
+    FUNCTION = "preview_profile"
+    CATEGORY = "prompt/artist_style"
+
+    def __init__(self, resolver=None):
+        self._resolver = (
+            resolver if resolver is not None else ArtistStyleResolver()
+        )
+
+    def preview_profile(self, artist_name):
+        profile = self._resolver.resolve(artist_name)
+        return (
+            profile_to_text(profile),
+            profile_to_json(profile),
         )
 
 
